@@ -28,8 +28,18 @@ svg{width:18px;height:18px;display:block}.tile>div{min-width:0}.tile strong{font
 .home-training-grid .tile{flex-direction:column;align-items:flex-start;gap:6px}
 .home-training-grid .tile .arrow{display:none}
 .word-book-list{margin:0;padding:0;list-style:none;border:1px solid var(--line);border-radius:13px;background:#fff}
-.word-book-list li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:8px;padding:6px 10px;min-height:56px;font-size:13px}
+.word-book-list li{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:6px 10px;min-height:56px;font-size:13px}
 .word-book-list li+li{border-top:1px solid #f1e5dc}
+.word-book-list li:has(input:checked){background:#fff6ed}
+.book-word-choice{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px;min-height:44px}
+.book-word-choice input{margin:0;accent-color:var(--orange)}
+.book-selection{margin-bottom:9px}
+.book-selection>span{font-size:13px;font-weight:750}
+.book-home-meta{display:inline-flex;align-items:center;gap:6px;color:var(--muted)}
+.book-home-meta svg{width:15px;height:15px}
+.book-action-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.book-action-row .pill{min-height:44px;padding-inline:4px;white-space:nowrap}
+.book-action-row .pill:disabled{opacity:1;background:#f2e8e0;color:#7a665b}
 .word-book-list b,.word-book-list .meaning{display:block;overflow-wrap:anywhere}
 .word-book-list .meaning,.word-book-list .book-count{color:var(--muted);font-size:12px}
 .word-book-list .book-count{white-space:nowrap}
@@ -152,8 +162,6 @@ svg{width:18px;height:18px;display:block}.tile>div{min-width:0}.tile strong{font
 .screen-actions .primary:disabled{opacity:1;background:#eedbd0;color:#73594b}
 .word>small{text-align:right;overflow-wrap:anywhere}
 .result-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.wrong-practice-option span{display:grid;gap:4px}
-.wrong-practice-option svg{flex:none;color:#8b391c}
 .result-actions .primary{grid-column:1/-1}
 .result-actions.dict-review-footer{grid-template-columns:minmax(0,1fr)}
 .result-actions .pill,.split .pill{min-height:40px}
@@ -270,9 +278,9 @@ const tools={
   study:['学新词']
 };
 const bookPracticeModes={
-  study:['学新词','看单词和意思，点读发音','study'],
-  dict:['报听写','听提示，在纸上写单词','dict'],
-  meaning:['测词义','看英文单词，选中文意思','translate']
+  study:['学新词','study'],
+  dict:['报听写','dict'],
+  meaning:['测词义','translate']
 };
 const firstBookUnits=[
   ['Unit 1','认识新朋友',[['name','名字'],['nice','友好的'],['ear','耳朵'],['hand','手'],['listen','听'],['help','帮助']]],
@@ -367,7 +375,7 @@ st.dictMarked=new Map();
 st.dictReviewIndex=0;
 st.photoBack='home';
 st.wrongBack='home';
-st.practiceBook='wrong';
+st.bookSelection={wrong:new Set(),favorite:new Set()};
 st.favoriteAdded=new Set();
 let playId=0,gameTimer=0,readCapture=null,readAudioUrl='',readPlayer=null;
 const readStorage=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))||fallback}catch{return fallback}};
@@ -455,7 +463,7 @@ function go(page){
     gameTimer=0;
     st.gameElapsed=gameTime();
   }
-  if(page==='wrong'&&st.page!=='bookPractice'){
+  if(page==='wrong'){
     st.wrongBack=st.page==='result'&&st.tool==='dict'?'result':'home';
   }
   st.page=page;st.notice='';render();view.scrollTop=0;window.scrollTo(0,0);
@@ -472,8 +480,9 @@ function setup(k,source='unit',bookPracticeMode=''){
   st.gap=5;
   st.repeats=1;
   if(bookPracticeMode){
-    st.wrongBack='home';
-    choosePool();
+    st.selected=new Set(st.bookSelection[source]);
+    initializeRound();
+    return;
   }
   go('setup');
 }
@@ -550,7 +559,8 @@ function progress(i,total,showCount=true){return `${showCount?`<div class="betwe
 function homeBooks(){
   return `<section class="home-module" aria-labelledby="home-books-title">
     <div class="home-section"><h2 class="section-title" id="home-books-title">词本</h2></div>
-    <div class="list">${Object.entries(bookNames).map(([key,name])=>action(`data-nav="${key}"`,name+icon('right'),'training-source')).join('')}</div>
+    <div class="list">${Object.entries(bookNames).map(([key,name])=>action(`data-nav="${key}"`,
+      `<span>${name}</span><span class="book-home-meta"><small>${bookRows(key).length} 词</small>${icon('right')}</span>`,'training-source')).join('')}</div>
   </section>`;
 }
 function home(){
@@ -639,15 +649,6 @@ function dictUnitPicker(){
   return `<div class="${layoutClass}" role="group" aria-label="教材单元">${units}</div>`;
 }
 function setupView(){
-  if(st.bookPracticeMode){
-    const words=pool();
-    return `<section class="card">
-      <div class="between words-head"><h2 class="section-title">${bookNames[st.source]} · ${words.length} 词</h2>
-        <div class="setup-actions">${action('data-all','全选','mini',st.selected.size===words.length)}${action('data-clear','清空','mini',!st.selected.size)}</div>
-      </div>
-      ${wordList(words,st.source)}
-    </section>`;
-  }
   const isUnit=st.source==='unit';
   const available=pool();
   const scope=isUnit?`<section class="card setup-source">
@@ -756,7 +757,7 @@ function studyWordView(){
     <div class="actions">${action('data-speak="word"',icon('dict')+'听发音','pill mint')}${favoriteAction()}</div>
     <div class="split actions">
       ${action('data-move="-1"','上一词','pill',st.i===0)}
-      ${st.i===st.round.length-1?action('data-nav="bookPractice"','看完了','primary'):action('data-move="1"','下一词','primary')}
+      ${st.i===st.round.length-1?action(`data-nav="${st.source}"`,'看完了','primary'):action('data-move="1"','下一词','primary')}
     </div>${timerNote()}`;
 }
 function exercise(){
@@ -864,18 +865,31 @@ function photoView(){
 function bookView(source){
   const words=bookRows(source);
   if(!words.length)return `<p class="card empty">${bookNames[source]}还没有单词。</p>`;
-  return `<ul class="word-book-list" aria-label="${bookNames[source]}词表">
-    ${words.map(({en,cn,count})=>`<li>
-      <div><b lang="en">${safe(en)}</b><span class="meaning">${safe(cn)}</span></div>
-      <span class="book-count">累计 ${count||1} 次</span>
-      ${action(`data-remove-book-word="${safe(wordKey(en))}" aria-label="从${bookNames[source]}移出 ${safe(en)}"`,'移出','book-remove')}
-    </li>`).join('')}
+  const selected=st.bookSelection[source];
+  const all=selected.size===words.length;
+  return `<div class="between book-selection">
+    <span role="status">已选 ${selected.size} 词</span>
+    ${action('data-book-select-all',all?'取消全选':'全选','mini')}
+  </div>
+  <ul class="word-book-list" aria-label="${bookNames[source]}词表">
+    ${words.map(({en,cn,count})=>{
+      const key=wordKey(en);
+      return `<li>
+        <label class="book-word-choice">
+          <input type="checkbox" data-book-word="${safe(key)}"${selected.has(key)?' checked':''}>
+          <span><b lang="en">${safe(en)}</b><span class="meaning">${safe(cn)}</span></span>
+          <span class="book-count">累计 ${count||1} 次</span>
+        </label>
+        ${action(`data-remove-book-word="${safe(key)}" aria-label="从${bookNames[source]}移出 ${safe(en)}"`,'移出','book-remove')}
+      </li>`;
+    }).join('')}
   </ul>`;
 }
-function bookPracticeView(){
-  return `<div class="list">${Object.entries(bookPracticeModes).map(([key,[label,detail]])=>
-    action(`data-practice-mode="${key}"`,`<span>${label}<small>${detail}</small></span>${icon('right')}`,
-      'training-source wrong-practice-option')).join('')}</div>`;
+function bookActionFooter(source){
+  return `<div class="book-action-row" role="group" aria-label="练习已选单词">
+    ${Object.entries(bookPracticeModes).map(([key,[label]])=>
+      action(`data-practice-mode="${key}"`,label,'pill',!st.bookSelection[source].size)).join('')}
+  </div>`;
 }
 const pageNotes={
   home:['小测首页','从底栏「小测」进入。',[
@@ -937,19 +951,15 @@ const pageNotes={
   ],()=>st.rows.length?`有 ${st.rows.length} 条词条待核对。`:st.photoUrl?'已载入照片，可继续使用示例或手动输入。':'等待导入词单。'],
   wrong:['错题本','从小测首页或听写结果页进入。',[
     '查看每个词的释义和累计收录次数。',
-    '点「练这些词」选练法，点词旁的「移出」把它移出错题本。'
+    '勾选单词或点「全选」，再点底部的练习方式。点词旁的「移出」可移出错题本。'
   ],()=>`当前有 ${bookRows('wrong').length} 个词。`],
   favorite:['收藏本','从小测首页的「词本」进入。',[
     '查看收藏的单词、释义和累计收录次数。',
-    '点「练这些词」选练法，点词旁的「移出」取消该词的收藏。'
+    '勾选单词或点「全选」，再点底部的练习方式。点词旁的「移出」可取消收藏。'
   ],()=>`当前有 ${bookRows('favorite').length} 个词。`],
-  bookPractice:['选一种练法','在错题本或收藏本点「练这些词」。',[
-    '可以学新词、报听写或测词义。',
-    '选好练法后默认勾选当前词本里的词，可以逐词取消。'
-  ],()=>`${bookNames[st.practiceBook]} · ${bookRows(st.practiceBook).length} 个词。`],
   study:['学新词','从错题本或收藏本选「学新词」并开始。',[
     '先看单词和中文意思，点「听发音」。',
-    '点「下一词」接着看。看完后可选一种小测。'
+    '点「下一词」接着看。看完后回词本，也可以用已选单词做小测。'
   ],()=>`第 ${st.i+1} / ${st.round.length} 词。`]
 };
 const pageNote=document.querySelector('#page-note');
@@ -964,8 +974,7 @@ function renderNote(title){
   if(player)steps=[dock?.player||player.hint,'点开始才播报。答案开关对本轮后续单词也生效。','报完后优先显示「去核对」，也能从头再报。'];
   if(dock&&key==='check')steps=[dock.review,'上方显示本轮加入的词数，点亮或取消时实时更新。','点「完成核对」查看本轮结果。'];
   if(key==='result'&&st.tool==='dict')steps=[st.dictMarked.size?'点收录词数旁的「查看」，可打开错题本。':'查看本轮词数。','点「返回小测」结束本轮，或点「重听一遍」用同一组词重新准备。'];
-  if(st.page==='setup'&&st.bookPracticeMode)steps=['默认勾选当前词本里的词，可以取消个别单词。','选好单词后点底部按钮开始。'];
-  if(layout&&!st.bookPracticeMode)steps=[layout.bookHint,unitStyle?.hint||layout.unitHint,'单元词会自动勾选，可取消个别词，再点「开始听写」。也可以从「错题本」或「收藏本」选词。'];
+  if(layout)steps=[layout.bookHint,unitStyle?.hint||layout.unitHint,'单元词会自动勾选，可取消个别词，再点「开始听写」。也可以从「错题本」或「收藏本」选词。'];
   pageNote.innerHTML=`<h2 id="note-title">${dock?.name||player?.name||unitStyle?.name||layout?.name||label||title+' · 选词'}</h2>
     <section><h3>怎么进入</h3><p>${entry}</p></section>
     <section><h3>怎么操作</h3><ol>${steps.map(step=>'<li>'+step+'</li>').join('')}</ol></section>
@@ -1025,21 +1034,21 @@ function render(){
   const selecting=st.page==='setup';
   const practiceAction=Object.hasOwn(bookNames,st.page)&&bookRows(st.page).length>0;
   const toolTitle=bookPracticeModes[st.bookPracticeMode]?.[0]||tools[st.tool][0];
-  const title={home:'小测',grade:'切换教材',term:'切换教材',setup:st.bookPracticeMode?'选择单词':toolTitle,exercise:toolTitle,check:'核对答案',result:'练习结果',photo:'拍照识别',...bookNames,bookPractice:'选一种练法'}[st.page];
+  const title={home:'小测',grade:'切换教材',term:'切换教材',setup:toolTitle,exercise:toolTitle,check:'核对答案',result:'练习结果',photo:'拍照识别',...bookNames}[st.page];
   const backIcon='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></svg>';
   heading.classList.toggle('is-home',homePage);
   heading.innerHTML=`${homePage?'':action('data-back aria-label="返回"',backIcon,'back')}<h1>${title}</h1>`;
   view.classList.toggle('is-book-flow',switching);
   document.querySelector('.navigation').hidden=switching;
-  view.innerHTML=({home,grade:bookFlow,term:bookFlow,setup:setupView,exercise,check:checkView,result:resultView,photo:photoView,wrong:()=>bookView('wrong'),favorite:()=>bookView('favorite'),bookPractice:bookPracticeView})[st.page]();
+  view.innerHTML=({home,grade:bookFlow,term:bookFlow,setup:setupView,exercise,check:checkView,result:resultView,photo:photoView,wrong:()=>bookView('wrong'),favorite:()=>bookView('favorite')})[st.page]();
   screenActions.hidden=!selecting&&!practiceAction;
-  screenActions.innerHTML=selecting?selectionFooter():practiceAction?action(`data-practice-book="${st.page}"`,'练这些词','primary'):'';
+  screenActions.innerHTML=selecting?selectionFooter():practiceAction?bookActionFooter(st.page):'';
   renderNote(title);
 }
 function selectionFooter(){
-  const startLabel=st.tool==='dict'?'开始听写':st.tool==='study'?'开始看词':st.bookPracticeMode?'开始小测':'开始练习';
+  const startLabel=st.tool==='dict'?'开始听写':'开始练习';
   const start=action('data-start',st.selected.size?`${startLabel} · 已选 ${st.selected.size} 词`:startLabel,'primary',!st.selected.size);
-  if(st.bookPracticeMode||st.tool==='dict'||st.tool==='game')return start;
+  if(st.tool==='dict'||st.tool==='game')return start;
   return `<div class="training-footer">
     <select data-training-order aria-label="出词顺序">${['正序','倒序','乱序'].map(order=>`<option${st.order===order?' selected':''}>${order}</option>`).join('')}</select>
     ${start}
@@ -1227,7 +1236,12 @@ document.addEventListener('click',async event=>{
     comparisonNav.querySelector(`[data-layout-option="${dictLayout}"]`)?.focus({preventScroll:true});
     return;
   }
-  if(d.back!==undefined){go(({grade:'setup',term:'grade',setup:st.bookPracticeMode?'bookPractice':'home',exercise:'setup',check:'setup',result:'home',photo:st.photoBack,wrong:st.wrongBack,favorite:'home',bookPractice:st.practiceBook})[st.page]||'home');return;}
+  if(d.back!==undefined){
+    const selectionPage=st.bookPracticeMode?st.source:'setup';
+    go(({grade:'setup',term:'grade',setup:'home',exercise:selectionPage,check:selectionPage,
+      result:'home',photo:st.photoBack,wrong:st.wrongBack,favorite:'home'})[st.page]||'home');
+    return;
+  }
   if(d.openBook!==undefined){openBook();return;}
   if(d.inlineBookToggle!==undefined){
     st.inlineBook=!st.inlineBook;
@@ -1352,16 +1366,21 @@ document.addEventListener('click',async event=>{
   }
   if(d.removeBookWord){
     removeBookWord(st.page,d.removeBookWord);
+    st.bookSelection[st.page].delete(d.removeBookWord);
     render();
     return;
   }
-  if(d.practiceBook){
-    st.practiceBook=d.practiceBook;
-    go('bookPractice');
+  if(d.bookSelectAll!==undefined){
+    const words=bookRows(st.page);
+    const selected=st.bookSelection[st.page];
+    if(selected.size===words.length)selected.clear();
+    else for(const {en} of words)selected.add(wordKey(en));
+    render();
+    view.querySelector('[data-book-select-all]')?.focus({preventScroll:true});
     return;
   }
-  if(d.practiceMode&&bookRows(st.practiceBook).length){
-    setup(bookPracticeModes[d.practiceMode][2],st.practiceBook,d.practiceMode);
+  if(d.practiceMode&&st.bookSelection[st.page]?.size){
+    setup(bookPracticeModes[d.practiceMode][1],st.page,d.practiceMode);
   }
 });
 view.addEventListener('keydown',event=>{
@@ -1381,6 +1400,13 @@ view.addEventListener('change',event=>{
     applyBook(d.inlineBook==='grade'?t.value+'-'+term:grade+'-'+t.value);
     render();
     view.querySelector(`[data-inline-book="${d.inlineBook}"]`)?.focus({preventScroll:true});
+    return;
+  }
+  if(d.bookWord!==undefined){
+    const selected=st.bookSelection[st.page];
+    if(t.checked)selected.add(d.bookWord);else selected.delete(d.bookWord);
+    render();
+    [...view.querySelectorAll('[data-book-word]')].find(input=>input.dataset.bookWord===d.bookWord)?.focus({preventScroll:true});
     return;
   }
   if(d.select!==undefined){
