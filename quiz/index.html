@@ -41,6 +41,28 @@ svg{width:18px;height:18px;display:block}.tile>div{min-width:0}.tile strong{font
 .setup-book button{flex:none}
 .scope-title{display:flex;align-items:baseline;gap:6px;margin:13px 0 6px}
 .scope-title small{color:var(--muted);font-size:11px}
+.compare-switch{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.compare-switch button{min-height:34px}
+.dict-book-trigger{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#fffaf4;text-align:left}
+.dict-book-trigger svg{flex:none;color:#795d4c}
+.dict-book-trigger[aria-expanded=true] svg{transform:rotate(180deg)}
+.dict-book-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.dict-book-fields .field{margin:0;min-width:0}
+.dict-book-fields select{min-height:36px;min-width:0}
+.dict-book-fields.inline{margin-top:8px}
+.dict-edition{margin-bottom:7px;color:var(--muted);font-size:11px}
+.dict-unit-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.dict-unit-grid button{min-height:38px;padding-inline:4px}
+.dict-unit-cards,.dict-unit-list{display:grid;gap:7px}
+.dict-unit-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+.dict-unit-option{display:flex;align-items:flex-start;gap:7px;min-width:0;padding:8px;text-align:left}
+.dict-unit-option .training-check{margin-top:1px}
+.dict-unit-option[aria-pressed=true] .training-check{background:#fff;border-color:currentColor;color:inherit}
+.dict-unit-option .unit-copy{display:grid;gap:3px;min-width:0;flex:1}
+.dict-unit-option .unit-copy span{font-size:11px;font-weight:500;color:var(--muted);overflow-wrap:anywhere}
+.dict-unit-option small{color:var(--muted);white-space:nowrap;font-size:10px}
+.dict-unit-cards .dict-unit-option small{display:block;margin-top:2px}
+.dict-unit-list .dict-unit-option{min-height:46px;align-items:center}
 .setup-actions{display:flex;gap:6px;align-items:center}
 .setup-actions .mini{min-width:48px}
 .setup-source .actions{margin-top:0}
@@ -147,6 +169,7 @@ svg{width:18px;height:18px;display:block}.tile>div{min-width:0}.tile strong{font
 <header class="preview-head">
   <h1>小测</h1>
   <p>点按手机界面，查看当前页面的功能与操作说明。</p>
+  <nav id="dict-comparison" class="compare-switch" aria-label="对比选词方案" hidden></nav>
 </header>
 <main class="layout"><section class="device" aria-label="词课小测原型"><div class="phone-screen">
 <div class="status" aria-hidden="true"><span>9:41</span><span>▮▮▮　▰</span></div><header class="app-header" id="header"></header><div id="view" class="view"></div>
@@ -185,6 +208,13 @@ const firstBookUnits=[
 const grades = {3:'三',4:'四',5:'五',6:'六'};
 const terms = {up:'上',down:'下'};
 const defaultBook = '5-up';
+const dictLayouts={
+  compact:{name:'A · 紧凑按钮',bookHint:'点教材整行进入年级和册别选择。',unitHint:'三列等宽按钮，可连续点选多个单元。'},
+  cards:{name:'B · 两列卡片',bookHint:'直接用两个下拉框改年级或上下册。',unitHint:'每张卡显示单元主题和词数，点整张卡可选中。'},
+  list:{name:'C · 勾选列表',bookHint:'点教材整行，在原位展开年级和册别。',unitHint:'每行显示单元主题和词数，点整行可勾选。'}
+};
+const requestedLayout=new URLSearchParams(location.search).get('layout');
+let dictLayout=Object.hasOwn(dictLayouts,requestedLayout)?requestedLayout:null;
 const makeUnits = entries => entries.map(([title,vocab],index)=>[
   'Unit '+(index+1), title, vocab.split('|').map(pair=>pair.split('：'))
 ]);
@@ -232,6 +262,7 @@ const savedSelection=readStorage(selectionKey,{});
 st.book=Object.hasOwn(books,savedSelection.book)?savedSelection.book:defaultBook;
 function currentUnits(){return books[st.book];}
 function saveSelection(){
+  if(dictLayout)return;
   try{localStorage.setItem(selectionKey,JSON.stringify({book:st.book}));}catch{}
 }
 function bookName(book){
@@ -267,6 +298,7 @@ function go(page){
 function notify(msg){st.notice=msg;render();}
 function setup(k,source='unit'){
   st.tool=k;st.source=source;st.order='正序';st.direction='en';
+  st.inlineBook=false;
   st.selectedUnits.clear();
   st.expandedUnits.clear();
   st.selected.clear();
@@ -375,6 +407,14 @@ function openBook(){
   [st.draftGrade,st.draftTerm]=st.book.split('-');
   go('grade');
 }
+function applyBook(book){
+  if(book===st.book)return;
+  st.book=book;
+  st.selectedUnits.clear();
+  st.expandedUnits.clear();
+  st.selected.clear();
+  saveSelection();
+}
 function bookFlow(){
   const isGrade=st.page==='grade';
   const currentGrade=st.book.split('-')[0];
@@ -404,6 +444,37 @@ function wordList(rows,index){
 }
 function bookPicker(){
   return `<div class="between setup-book"><div><strong>${bookName(st.book)}</strong><small>人教 PEP 版</small></div>${action('data-open-book','切换教材','mini')}</div>`;
+}
+function inlineBookFields(){
+  const [grade,term]=st.book.split('-');
+  const field=(label,key,options,value)=>`<label class="field">${label}<select data-inline-book="${key}">
+    ${Object.entries(options).map(([id,text])=>`<option value="${id}"${id===value?' selected':''}>${text}${key==='grade'?'年级':'册'}</option>`).join('')}
+    </select></label>`;
+  return `<div class="dict-book-fields${dictLayout==='list'?' inline':''}" id="inline-book-fields">
+    ${field('年级','grade',grades,grade)}${field('册别','term',terms,term)}
+  </div>`;
+}
+function dictBookPicker(){
+  if(!dictLayout)return bookPicker();
+  if(dictLayout==='cards')return `<p class="dict-edition">人教 PEP 版</p>${inlineBookFields()}`;
+  const inline=dictLayout==='list';
+  const label=`<div><strong>${bookName(st.book)}</strong><small>人教 PEP 版</small></div>`;
+  const control=inline?`data-inline-book-toggle aria-expanded="${Boolean(st.inlineBook)}" aria-controls="inline-book-fields"`:'data-open-book';
+  return action(control,label+icon(inline?'down':'right'),'setup-book dict-book-trigger')
+    +(inline?(st.inlineBook?inlineBookFields():'<div id="inline-book-fields" hidden></div>'):'');
+}
+function dictUnitPicker(){
+  const layoutClass={compact:'dict-unit-grid',cards:'dict-unit-cards',list:'dict-unit-list'}[dictLayout]||'actions';
+  const units=currentUnits().map(([unit,title,words],i)=>{
+    const selected=st.selectedUnits.has(i);
+    const detailed=dictLayout==='cards'||dictLayout==='list';
+    const meta=`<small>${words.length} 词</small>`;
+    const label=detailed?`<i class="training-check" aria-hidden="true">${selected?'✓':''}</i>
+      <span class="unit-copy"><strong>${safe(unit)}</strong><span>${safe(title)}</span>${dictLayout==='cards'?meta:''}</span>
+      ${dictLayout==='list'?meta:''}`:safe(unit);
+    return action(`data-unit="${i}"`,label,'pill'+(detailed?' dict-unit-option':''),false,selected);
+  }).join('');
+  return `<div class="${layoutClass}" role="group" aria-label="教材单元">${units}</div>`;
 }
 function trainingUnit([unit,title,words],index){
   const count=words.filter(([en])=>st.selected.has(wordKey(en))).length;
@@ -443,9 +514,9 @@ function setupView(){
   const isUnit=st.source==='unit';
   const available=pool();
   const scope=isUnit?`<section class="card setup-source">
-    ${bookPicker()}
+    ${dictBookPicker()}
     <div class="scope-title"><h2 class="section-title">选择单元</h2><small>可多选</small></div>
-    <div class="actions" role="group" aria-label="教材单元">${currentUnits().map(([unit],i)=>action(`data-unit="${i}"`,safe(unit),'pill',false,st.selectedUnits.has(i))).join('')}</div>
+    ${dictUnitPicker()}
     ${st.selectedUnits.size?'':'<p class="hint unit-hint">选好单元后，就能勾选要练的词。</p>'}
     </section>`:available.length?'':`<section class="card wrong-empty"><p class="hint">错题本还没有单词。</p>
     ${action('data-wrong-example','加入 3 个示例错词','mini')}</section>`;
@@ -640,11 +711,18 @@ const pageNotes={
 const pageNote=document.querySelector('#page-note');
 function renderNote(title){
   const key=st.page==='exercise'?st.tool:st.page==='setup'&&st.tool!=='dict'?'trainingSetup':st.page;
-  const [label,entry,steps,state]=pageNotes[key];
-  pageNote.innerHTML=`<h2 id="note-title">${label||title+' · 选词'}</h2>
+  const [label,entry,defaultSteps,state]=pageNotes[key];
+  const layout=key==='setup'?dictLayouts[dictLayout]:null;
+  const steps=layout?[layout.bookHint,layout.unitHint,'选好单元后勾词，再点「开始听写」。也可以从「错题本」选词。']:defaultSteps;
+  pageNote.innerHTML=`<h2 id="note-title">${layout?.name||label||title+' · 选词'}</h2>
     <section><h3>怎么进入</h3><p>${entry}</p></section>
     <section><h3>怎么操作</h3><ol>${steps.map(step=>'<li>'+step+'</li>').join('')}</ol></section>
     <section class="note-state"><h3>当前状态</h3><p>${safe(state())}</p></section>`;
+}
+const comparisonNav=document.querySelector('#dict-comparison');
+function renderComparisonNav(){
+  comparisonNav.innerHTML=Object.entries(dictLayouts).map(([key,layout])=>
+    action(`data-layout-option="${key}"`,layout.name,'pill',false,key===dictLayout)).join('');
 }
 function render(){
   const switching=st.page==='grade'||st.page==='term';
@@ -803,22 +881,33 @@ async function autoSpeak(){
 document.addEventListener('click',async event=>{
   const b=event.target.closest('button');if(!b||b.disabled)return;
   const d=b.dataset;
+  if(d.layoutOption){
+    if(d.layoutOption===dictLayout)return;
+    dictLayout=d.layoutOption;
+    const url=new URL(location.href);
+    url.searchParams.set('layout',dictLayout);
+    history.replaceState(null,'',url);
+    st.inlineBook=false;
+    renderComparisonNav();
+    if(st.page==='setup'&&st.tool==='dict')render();else setup('dict');
+    comparisonNav.querySelector(`[data-layout-option="${dictLayout}"]`)?.focus({preventScroll:true});
+    return;
+  }
   if(d.back!==undefined){go(({grade:'setup',term:'grade',setup:'home',exercise:'setup',check:'setup',result:'home',photo:st.photoBack,wrong:'home'})[st.page]||'home');return;}
   if(d.openBook!==undefined){openBook();return;}
+  if(d.inlineBookToggle!==undefined){
+    st.inlineBook=!st.inlineBook;
+    render();
+    view.querySelector('[data-inline-book-toggle]')?.focus({preventScroll:true});
+    return;
+  }
   if(d.bookGrade){
     if(d.bookGrade!==st.draftGrade)st.draftTerm=st.book.startsWith(d.bookGrade+'-')?st.book.split('-')[1]:'up';
     st.draftGrade=d.bookGrade;go('term');return;
   }
   if(d.bookTerm){st.draftTerm=d.bookTerm;render();return;}
   if(d.bookConfirm!==undefined){
-    const book=st.draftGrade+'-'+st.draftTerm;
-    if(book!==st.book){
-      st.book=book;
-      st.selectedUnits.clear();
-      st.expandedUnits.clear();
-      st.selected.clear();
-      saveSelection();
-    }
+    applyBook(st.draftGrade+'-'+st.draftTerm);
     go('setup');return;
   }
   if(d.nav){go(d.nav);return;}
@@ -913,6 +1002,13 @@ view.addEventListener('keydown',event=>{
 });
 view.addEventListener('change',event=>{
   const t=event.target,d=t.dataset;
+  if(d.inlineBook){
+    const [grade,term]=st.book.split('-');
+    applyBook(d.inlineBook==='grade'?t.value+'-'+term:grade+'-'+t.value);
+    render();
+    view.querySelector(`[data-inline-book="${d.inlineBook}"]`)?.focus({preventScroll:true});
+    return;
+  }
   if(d.select!==undefined){
     const group=t.closest('[data-word-group]').dataset.wordGroup;
     if(t.checked)st.selected.add(d.select);else st.selected.delete(d.select);
@@ -961,5 +1057,12 @@ view.addEventListener('submit',event=>{
   if(rows.length)setRows(rows);else notify('请输入英文单词，每行一个。');
 });
 window.addEventListener('pagehide',clearReadAudio);
-render();
+if(dictLayout){
+  const previewHeader=document.querySelector('.preview-head');
+  previewHeader.querySelector('h1').textContent='报听写选词方案';
+  previewHeader.querySelector('p').textContent='切换方案，试试怎么选教材、单元和单词。';
+  comparisonNav.hidden=false;
+  renderComparisonNav();
+  setup('dict');
+}else render();
 </script></body></html>
