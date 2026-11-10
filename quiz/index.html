@@ -307,6 +307,8 @@ const playerLayouts={
 };
 const requestedPlayer=new URLSearchParams(location.search).get('player');
 let playerLayout=Object.hasOwn(playerLayouts,requestedPlayer)?requestedPlayer:null;
+const requestedPreview=new URLSearchParams(location.search).get('state');
+const wrongResultPreview=Boolean(playerLayout)&&requestedPreview==='result-wrong';
 const dockLayouts={
   icon:{name:'A1 · 进度优先',player:'报词时进度放在最上面，设置紧跟其后。「再听一次」「看答案」都在词卡下方。',review:'点单词旁的书签，圆形按钮亮起。再点一次取消。'},
   labeled:{name:'A2 · 设置优先',player:'设置始终在最上面，进度在下面。「再听一次」「看答案」放进底部播放器的第一排。',review:'点书签后，按钮亮起，书签旁出现小勾。再点一次取消。'},
@@ -385,9 +387,12 @@ function bookName(book){
   const [grade,term]=book.split('-');
   return grades[grade]+'年级'+terms[term]+'册';
 }
-let wrong=readStorage('wordclass-unit-wrong-v1',{});
+let wrong=wrongResultPreview?{}:readStorage('wordclass-unit-wrong-v1',{});
 const favorites=new Map(readStorage('wordclass-unit-favorites-v1',[]));
-const save=()=>{try{localStorage.setItem('wordclass-unit-wrong-v1',JSON.stringify(wrong))}catch{}};
+const save=()=>{
+  if(wrongResultPreview)return;
+  try{localStorage.setItem('wordclass-unit-wrong-v1',JSON.stringify(wrong))}catch{}
+};
 const pending=()=>Object.values(wrong).filter(w=>!w.mastered);
 const escapeHtml=x=>String(x).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const action=(data,label,cls='pill',disabled=false,pressed=null)=>`<button type="button" class="${cls}" ${data}${disabled?' disabled':''}${pressed===null?'':` aria-pressed="${pressed}"`}>${label}</button>`;
@@ -414,8 +419,6 @@ function toggleDictMark(index){
     addWrong(word,'单词报听写');
     st.dictMarked.set(index,{previous,saved:wrong[key]});
   }
-  render();
-  view.querySelector(`[data-dict-mark="${index}"]`)?.focus({preventScroll:true});
 }
 function stop(){++playId;st.active=false;window.speechSynthesis?.cancel();}
 function say(text,lang='en-US'){return new Promise(resolve=>{if(!window.speechSynthesis){resolve(false);return}const u=new SpeechSynthesisUtterance(text);u.lang=lang;u.rate=st.rate;u.onend=()=>resolve(true);u.onerror=()=>resolve(false);speechSynthesis.speak(u);setTimeout(()=>resolve(false),8000)})}
@@ -990,6 +993,11 @@ function showPlayerPreview(state){
     initializeRound();
   }
   stop();
+  if(state==='result-wrong'){
+    [0,1].forEach(toggleDictMark);
+    go('result');
+    return;
+  }
   if(state==='check'||state==='result'){go(state);return;}
   st.dictFinished=state==='finished';
   st.i=st.dictFinished?st.round.length-1:state==='answer'?Math.min(1,st.round.length-1):0;
@@ -1303,7 +1311,13 @@ document.addEventListener('click',async event=>{
   if(d.addCurrent!==undefined){addWrong(current(),'朗读测试 · 手动标记');notify('已加入错题本。');return;}
   if(d.answer!==undefined&&!st.checked){st.picked=st.options[+d.answer];st.checked=true;record(st.picked===current()[st.direction==='zh'?0:1]);render();return;}
   if(d.pair){selectPair(d.pair);return;}
-  if(d.dictMark!==undefined){toggleDictMark(Number(d.dictMark));return;}
+  if(d.dictMark!==undefined){
+    const index=Number(d.dictMark);
+    toggleDictMark(index);
+    render();
+    view.querySelector(`[data-dict-mark="${index}"]`)?.focus({preventScroll:true});
+    return;
+  }
   if(d.reviewMove){
     st.dictReviewIndex+=Number(d.reviewMove);
     st.notice='';
@@ -1398,13 +1412,14 @@ window.addEventListener('pagehide',clearReadAudio);
 if(dictLayout||playerLayout){
   const previewHeader=document.querySelector('.preview-head');
   previewHeader.querySelector('h1').textContent=playerLayout==='reference'?'报听写 · 底部播放器':playerLayout?'报听写播放页方案':'报听写选词方案';
-  previewHeader.querySelector('p').textContent=playerLayout?'用同一组 6 个词比较播放和核对，点开始才播报。':'切换方案，试试怎么选教材、单元和单词。';
+  previewHeader.querySelector('p').textContent=wrongResultPreview?'本页预填 2 个示例错词，点「查看」体验跳转。'
+    :playerLayout?'用同一组 6 个词比较播放和核对，点开始才播报。':'切换方案，试试怎么选教材、单元和单词。';
   if(playerLayout)comparisonNav.setAttribute('aria-label','对比听写播放页方案');
   comparisonNav.hidden=false;
   renderComparisonNav();
   if(playerLayout){
-    const preview=new URLSearchParams(location.search).get('state');
-    showPlayerPreview(['setup','answer','finished','check','result'].includes(preview)?preview:'ready');
+    const states=['setup','answer','finished','check','result','result-wrong'];
+    showPlayerPreview(states.includes(requestedPreview)?requestedPreview:'ready');
   }else{
     if(dictLayout==='cards')st.book=defaultBook;
     setup('dict');
