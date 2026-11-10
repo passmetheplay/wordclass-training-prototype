@@ -150,6 +150,7 @@ svg{width:18px;height:18px;display:block}.tile>div{min-width:0}.tile strong{font
 .result-actions,.wrong-tabs{display:grid;gap:8px}
 .result-actions,.wrong-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
 .result-actions .primary{grid-column:1/-1}
+.result-actions.dict-review-footer{grid-template-columns:minmax(0,1fr)}
 .result-actions .pill,.wrong-tabs .pill,.split .pill{min-height:40px}
 .photo-actions{margin-top:10px}
 .word .mini{flex:none}
@@ -820,9 +821,8 @@ function dictResultView(){
       <p class="hint">本轮 ${st.round.length} 词 · 已加入错题本 <strong>${st.dictMarked.size}</strong> 词</p>
     </div>
     <div class="result-actions dict-review-footer">
-      ${action('data-start','再听一遍','primary')}
-      ${action('data-nav="check"','回看答案','pill')}${action('data-nav="wrong"','去错题本','pill')}
-      ${action('data-nav="home"','回小测','player-link')}
+      ${action('data-nav="home"','返回小测','primary')}
+      ${action('data-start','重听一遍','pill')}
     </div>
   </div>`;
 }
@@ -933,7 +933,8 @@ function renderNote(title){
   const dock=playerLayout==='reference'&&st.tool==='dict'&&['dict','check','result'].includes(key)?dockLayouts[dockLayout]:null;
   let steps=defaultSteps;
   if(player)steps=[dock?.player||player.hint,'点开始才播报。答案开关对本轮后续单词也生效。','报完后优先显示「去核对」，也能从头再报。'];
-  if(dock&&key==='check')steps=[dock.review,'上方显示本轮加入的词数，点亮或取消时实时更新。','完成后可从结果页回看答案。'];
+  if(dock&&key==='check')steps=[dock.review,'上方显示本轮加入的词数，点亮或取消时实时更新。','点「完成核对」查看本轮结果。'];
+  if(key==='result'&&st.tool==='dict')steps=['查看本轮词数和加入错题本的词数。','点「返回小测」结束本轮，或点「重听一遍」用同一组词重新准备。'];
   if(layout)steps=[layout.bookHint,unitStyle?.hint||layout.unitHint,'单元词会自动勾选，可取消个别词，再点「开始听写」。也可以从「错题本」或「收藏本」选词。'];
   pageNote.innerHTML=`<h2 id="note-title">${dock?.name||player?.name||unitStyle?.name||layout?.name||label||title+' · 选词'}</h2>
     <section><h3>怎么进入</h3><p>${entry}</p></section>
