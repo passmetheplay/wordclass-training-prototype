@@ -61,16 +61,6 @@ svg{width:18px;height:18px;display:block}.tile>div{min-width:0}.tile strong{font
 .dict-player .player-footer{padding:14px 0 6px;border-top:1px solid var(--line)}
 .dict-player .player-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) minmax(0,1fr);gap:7px}
 .dict-player .player-row button{min-height:44px;padding:6px 3px;font-size:13px}
-.dict-player .player-row.is-icon{grid-template-columns:54px 72px 54px;justify-content:center;gap:10px}
-.dict-player .player-transport{display:grid;place-items:center}
-.dict-player .player-transport svg{width:22px;height:22px;stroke-width:2.3}
-.dict-player .player-transport.primary svg{width:24px;height:24px}
-.dict-player .player-word .player-link{margin-top:3px;padding-inline:11px}
-.dict-player .player-word .player-link svg{width:16px;height:16px}
-.progress-controls-card .player-footer>.player-link{justify-self:center;padding-inline:12px}
-.dict-settings-summary{color:var(--muted);font-size:12px;line-height:1.5}
-.app-header .player-settings-trigger{grid-column:3;grid-row:1;min-height:36px;padding:0;font-size:12px}
-.app-header .player-settings-trigger[aria-expanded=true]{background:#ffebdb;color:#8b391c;border-color:#e2b49b}
 .dict-player .player-complete{display:grid;gap:8px}
 .dict-player .player-restart{min-height:44px;color:#795d4c}
 .dict-player .player-answer-only{justify-self:center;padding-inline:12px}
@@ -319,13 +309,6 @@ const dockLayouts={
 };
 const requestedDock=new URLSearchParams(location.search).get('dock');
 let dockLayout=Object.hasOwn(dockLayouts,requestedDock)?requestedDock:'icon';
-const progressControls={
-  top:{name:'进度下直调',hint:'设置在进度下方，三个选项随时可改。「再听一次」和「看答案」并排放在词卡下。'},
-  card:{name:'设置移到词卡下',hint:'先看当前词，再看词卡下的设置。「看答案」放在词卡内，「再听一次」靠近底部播放键。'},
-  toolbar:{name:'右上角设置',hint:'准备页直接展示三项设置。报词时显示当前设置，点右上角展开修改。「再听一次」和「看答案」在播放器上方并排。'}
-};
-const requestedProgressControl=new URLSearchParams(location.search).get('controls');
-let progressControl=Object.hasOwn(progressControls,requestedProgressControl)?requestedProgressControl:null;
 const makeUnits = (entries,offset=0) => entries.map(([title,vocab],index)=>[
   'Unit '+(index+offset+1), title, vocab.split('|').map(pair=>pair.split('：'))
 ]);
@@ -374,7 +357,6 @@ const wordMap=new Map(Object.values(books).flatMap(units=>units.flatMap(unit=>un
 const st={page:'home',tool:'dict',source:'unit',selectedUnits:new Set(),selected:new Set(),order:'正序',direction:'en',dictMode:'zh',gap:5,repeats:1,dictStarted:false,rate:.9,round:[],i:0,stats:[],active:false,checked:false,readTry:0,pair:null,matched:new Set(),miss:0,gameWords:[],gameRight:[],notice:'',photoUrl:'',rows:[],wrongFilter:'pending'};
 st.expandedUnits=new Set();
 st.dictAnswerVisible=false;
-st.dictSettingsOpen=false;
 st.dictFinished=false;
 st.dictUnitSelection=new Set();
 st.dictMarked=new Map();
@@ -509,7 +491,6 @@ function initializeRound(){
   st.dictReviewIndex=0;
   st.dictStarted=false;
   st.dictFinished=false;
-  st.dictSettingsOpen=false;
   newQuestion();
   if(st.tool==='game'){
     st.gameMode='text';
@@ -703,7 +684,6 @@ function dictSettings(){
 function dictExercise(){
   const layout=playerLayout||'reference';
   const dock=layout==='reference'?dockLayout:'';
-  const placement=dock==='icon'?(progressControl||'top'):null;
   const started=st.dictStarted;
   const finished=st.dictFinished;
   const visible=st.dictAnswerVisible;
@@ -717,50 +697,25 @@ function dictExercise(){
     <strong>第 ${st.i+1} / ${st.round.length} 词</strong><span class="${finished?'player-done':''}" role="status">${playStatus}</span>
   </div>${progress(st.i+1,st.round.length,false)}</div>`:'';
   const settings=dictSettings();
-  const foldSettings=placement==='toolbar'&&started&&!finished;
-  const settingsArea=foldSettings?`${st.dictSettingsOpen?'':`<p class="dict-settings-summary">${dictModes[st.dictMode]} · 间隔 ${st.gap} 秒 · 每词 ${st.repeats} 次</p>`}
-    <div id="dict-settings-panel"${st.dictSettingsOpen?'':' hidden'}>${settings}</div>`:settings;
-  const transport=(data,symbol,label,cls,disabled=false)=>action(`${data} aria-label="${label}" title="${label}"`,
-    icon(symbol),cls+' player-transport',disabled);
-  const playLabel=!started?'开始报词':st.active?'暂停报词':'继续报词';
-  const play=started&&placement?transport('data-play="dict"',st.active?'pause':'replay',playLabel,'primary')
-    :action('data-play="dict"',playLabel,'primary player-start');
+  const play=action('data-play="dict"',!started?'开始报词':st.active?'暂停报词':'继续报词','primary player-start');
   const reveal=started?action('data-reveal',icon('eye')+(visible?'藏起答案':'看答案'),'player-link',false,visible):'';
   const repeat=started?action('data-play="one"',icon('repeat')+'再听一次','player-link'):'';
   const secondary=started?`<div class="player-links" role="group" aria-label="当前单词">${repeat}${reveal}</div>`:'';
-  const previous=placement?transport('data-move="-1"','previous','上一词','pill',st.i===0)
-    :action('data-move="-1"','上一词','pill',st.i===0);
-  const last=st.i===st.round.length-1;
-  const next=placement&&!last?transport('data-move="1"','right','下一词','pill')
-    :action('data-move="1"',last?'去核对':'下一词','pill');
+  const previous=action('data-move="-1"','上一词','pill',st.i===0);
+  const next=action('data-move="1"',st.i===st.round.length-1?'去核对':'下一词','pill');
   const controls=finished?`<div class="player-complete">
     ${action('data-nav="check"','去核对','primary')}
     ${action('data-play="restart"','从头再报','pill player-restart')}
-  </div>`:started?`<div class="player-row${placement?' is-icon':''}" role="group" aria-label="播放控制">${previous}${play}${next}</div>`:play;
-  const underCard=dock==='guided'||placement==='card';
-  const top=dock==='labeled'?settings+status:status+(underCard?'':settingsArea);
-  let cardAction='', middle=secondary, footer='';
-  if(finished){
-    middle=`<div class="player-answer-only">${reveal}</div>`+(underCard?settings:'');
-  }else if(placement==='card'){
-    cardAction=reveal;
-    middle=settings;
-    footer=repeat;
-  }else if(dock==='guided'){
-    middle=reveal+settings;
-    footer=repeat;
-  }else if(dock==='labeled'||placement==='toolbar'){
-    middle='';
-    footer=secondary;
-  }
-  return `<div class="dict-player dict-player-${layout}${dock?' dock-'+dock:''}${placement?' progress-controls-'+placement:''}${started?'':' is-ready'}">
+  </div>`:started?`<div class="player-row" role="group" aria-label="播放控制">${previous}${play}${next}</div>`:play;
+  const top=dock==='labeled'?settings+status:status+(dock==='guided'?'':settings);
+  return `<div class="dict-player dict-player-${layout}${dock?' dock-'+dock:''}${started?'':' is-ready'}">
     ${top?`<div class="player-top">${top}</div>`:''}
     <div class="player-middle">
-      <div class="player-word">${word}${cardAction}</div>
-      ${middle}
+      <div class="player-word">${word}</div>
+      ${finished?`<div class="player-answer-only">${reveal}</div>${dock==='guided'?settings:''}`:dock==='guided'?reveal+settings:dock==='labeled'?'':secondary}
       ${timerNote()}
     </div>
-    <div class="player-footer">${footer}${controls}</div>
+    <div class="player-footer">${finished?'':dock==='guided'?repeat:dock==='labeled'?secondary:''}${controls}</div>
   </div>`;
 }
 const phonetics={name:'neɪm',nice:'naɪs',ear:'ɪr',hand:'hænd',listen:'ˈlɪsən',help:'hɛlp',kind:'kaɪnd',strict:'strɪkt',young:'jʌŋ',funny:'ˈfʌni',polite:'pəˈlaɪt',helpful:'ˈhɛlpfəl'};
@@ -976,12 +931,11 @@ function renderNote(title){
   const unitStyle=layout&&dictLayout==='cards'?bUnitStyles[bUnitStyle]:null;
   const player=key==='dict'?playerLayouts[playerLayout]:null;
   const dock=playerLayout==='reference'&&st.tool==='dict'&&['dict','check','result'].includes(key)?dockLayouts[dockLayout]:null;
-  const comparison=key==='dict'&&dockLayout==='icon'&&playerLayout==='reference'?progressControls[progressControl]:null;
   let steps=defaultSteps;
-  if(player)steps=[comparison?.hint||dock?.player||player.hint,'点开始才播报。答案开关对本轮后续单词也生效。','报完后优先显示「去核对」，也能从头再报。'];
+  if(player)steps=[dock?.player||player.hint,'点开始才播报。答案开关对本轮后续单词也生效。','报完后优先显示「去核对」，也能从头再报。'];
   if(dock&&key==='check')steps=[dock.review,'上方显示本轮加入的词数，点亮或取消时实时更新。','完成后可从结果页回看答案。'];
   if(layout)steps=[layout.bookHint,unitStyle?.hint||layout.unitHint,'单元词会自动勾选，可取消个别词，再点「开始听写」。也可以从「错题本」或「收藏本」选词。'];
-  pageNote.innerHTML=`<h2 id="note-title">${comparison?.name||dock?.name||player?.name||unitStyle?.name||layout?.name||label||title+' · 选词'}</h2>
+  pageNote.innerHTML=`<h2 id="note-title">${dock?.name||player?.name||unitStyle?.name||layout?.name||label||title+' · 选词'}</h2>
     <section><h3>怎么进入</h3><p>${entry}</p></section>
     <section><h3>怎么操作</h3><ol>${steps.map(step=>'<li>'+step+'</li>').join('')}</ol></section>
     <section class="note-state"><h3>当前状态</h3><p>${safe(state())}</p></section>`;
@@ -994,14 +948,9 @@ function renderComparisonNav(){
     const styles=playerLayout==='reference'?`<div class="dock-variants" role="group" aria-label="底部播放器样式">
       ${Object.entries(dockLayouts).map(([key,layout])=>action(`data-dock-option="${key}"`,layout.name,'pill',false,key===dockLayout)).join('')}
     </div>`:'';
-    const progressVariants=playerLayout==='reference'&&dockLayout==='icon'&&progressControl
-      ?`<div class="dock-variants" role="group" aria-label="进度优先的播放布局">
-        ${Object.entries(progressControls).map(([key,style])=>action(`data-progress-control="${key}"`,style.name,'pill',false,key===progressControl)).join('')}
-      </div>`:'';
-    comparisonNav.innerHTML=(progressVariants||styles||layouts)+`<div class="compare-states" role="group" aria-label="预览页面状态">
+    comparisonNav.innerHTML=(styles||layouts)+`<div class="compare-states" role="group" aria-label="预览页面状态">
       ${action('data-player-state="setup"','看选词页','mini')}
       ${action('data-player-state="ready"','看准备页','mini')}
-      ${action('data-player-state="playing"','看播报页','mini')}
       ${action('data-player-state="answer"','看答案状态','mini')}
       ${action('data-player-state="finished"','看报词结束','mini')}
       ${action('data-player-state="check"','看核对页','mini')}
@@ -1028,12 +977,10 @@ function showPlayerPreview(state){
   stop();
   if(state==='check'||state==='result'){go(state);return;}
   st.dictFinished=state==='finished';
-  const playback=state==='answer'||state==='playing';
-  st.i=st.dictFinished?st.round.length-1:playback?Math.min(1,st.round.length-1):0;
+  st.i=st.dictFinished?st.round.length-1:state==='answer'?Math.min(1,st.round.length-1):0;
   newQuestion();
-  st.dictStarted=st.dictFinished||playback;
-  st.dictSettingsOpen=false;
-  if(playback)st.dictAnswerVisible=state==='answer';
+  st.dictStarted=st.dictFinished||state==='answer';
+  if(state==='answer')st.dictAnswerVisible=true;
   go('exercise');
 }
 function render(){
@@ -1043,10 +990,7 @@ function render(){
   const title={home:'小测',grade:'切换教材',term:'切换教材',setup:tools[st.tool][0],exercise:tools[st.tool][0],check:'核对答案',result:'练习结果',photo:'拍照识别',wrong:'错题本'}[st.page];
   const backIcon='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></svg>';
   heading.classList.toggle('is-home',homePage);
-  const settingsToggle=st.page==='exercise'&&st.tool==='dict'&&playerLayout==='reference'
-    &&dockLayout==='icon'&&progressControl==='toolbar'&&st.dictStarted&&!st.dictFinished;
-  const settingsButton=settingsToggle?action(`data-player-settings aria-expanded="${st.dictSettingsOpen}" aria-controls="dict-settings-panel"`,'设置','mini player-settings-trigger'):'';
-  heading.innerHTML=`${homePage?'':action('data-back aria-label="返回"',backIcon,'back')}<h1>${title}</h1>${settingsButton}`;
+  heading.innerHTML=`${homePage?'':action('data-back aria-label="返回"',backIcon,'back')}<h1>${title}</h1>`;
   view.classList.toggle('is-book-flow',switching);
   document.querySelector('.navigation').hidden=switching;
   view.innerHTML=({home,grade:bookFlow,term:bookFlow,setup:setupView,exercise,check:checkView,result:resultView,photo:photoView,wrong:wrongView})[st.page]();
@@ -1184,7 +1128,6 @@ async function autoSpeak(){
   stop();
   const id=playId;
   st.dictStarted=true;
-  st.dictSettingsOpen=false;
   st.active=true;
   st.notice='';
   render();
@@ -1203,25 +1146,6 @@ async function autoSpeak(){
 document.addEventListener('click',async event=>{
   const b=event.target.closest('button');if(!b||b.disabled)return;
   const d=b.dataset;
-  if(d.progressControl){
-    if(d.progressControl===progressControl)return;
-    progressControl=d.progressControl;
-    st.dictSettingsOpen=false;
-    const url=new URL(location.href);
-    url.searchParams.set('controls',progressControl);
-    history.replaceState(null,'',url);
-    renderComparisonNav();
-    render();
-    comparisonNav.querySelector(`[data-progress-control="${progressControl}"]`)?.focus({preventScroll:true});
-    return;
-  }
-  if(d.playerSettings!==undefined){
-    st.dictSettingsOpen=!st.dictSettingsOpen;
-    if(st.dictSettingsOpen&&st.active)stop();
-    render();
-    heading.querySelector('[data-player-settings]')?.focus({preventScroll:true});
-    return;
-  }
   if(d.dockOption){
     if(d.dockOption===dockLayout)return;
     dockLayout=d.dockOption;
@@ -1458,14 +1382,14 @@ view.addEventListener('submit',event=>{
 window.addEventListener('pagehide',clearReadAudio);
 if(dictLayout||playerLayout){
   const previewHeader=document.querySelector('.preview-head');
-  previewHeader.querySelector('h1').textContent=playerLayout==='reference'&&dockLayout==='icon'&&progressControl?'进度优先 · 播放布局':playerLayout==='reference'?'报听写 · 底部播放器':playerLayout?'报听写播放页方案':'报听写选词方案';
+  previewHeader.querySelector('h1').textContent=playerLayout==='reference'?'报听写 · 底部播放器':playerLayout?'报听写播放页方案':'报听写选词方案';
   previewHeader.querySelector('p').textContent=playerLayout?'用同一组 6 个词比较播放和核对，点开始才播报。':'切换方案，试试怎么选教材、单元和单词。';
   if(playerLayout)comparisonNav.setAttribute('aria-label','对比听写播放页方案');
   comparisonNav.hidden=false;
   renderComparisonNav();
   if(playerLayout){
     const preview=new URLSearchParams(location.search).get('state');
-    showPlayerPreview(['setup','playing','answer','finished','check','result'].includes(preview)?preview:'ready');
+    showPlayerPreview(['setup','answer','finished','check','result'].includes(preview)?preview:'ready');
   }else{
     if(dictLayout==='cards')st.book=defaultBook;
     setup('dict');
