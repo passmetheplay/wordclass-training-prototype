@@ -78,7 +78,10 @@ svg{width:18px;height:18px;display:block}.tile>div{min-width:0}.tile strong{font
 .dock-guided .player-footer>.player-link{justify-self:center;padding-inline:12px}
 .dock-variants{display:flex;flex-basis:100%;flex-wrap:wrap;gap:6px}
 .dict-review{display:flex;flex-direction:column;min-height:100%;gap:10px}
-.dict-review-head{padding:0 0 3px}
+.dict-review-head{display:grid;gap:5px;padding:0 0 3px}
+.dict-review-key{display:flex;align-items:center;gap:10px;margin-bottom:2px}
+.dict-review-key strong{display:inline-flex;align-items:center;gap:4px;font-size:13px;color:#704e3c}
+.dict-review-key svg{width:16px;height:16px}
 .dict-review-head p,.dict-review-count{font-size:12px;color:var(--muted);line-height:1.5}
 .dict-review-count{font-weight:800;color:var(--mint)}
 .dict-review-list{border:1px solid var(--line);border-radius:13px;background:#fff;overflow:hidden}
@@ -86,16 +89,16 @@ svg{width:18px;height:18px;display:block}.tile>div{min-width:0}.tile strong{font
 .dict-review-row+.dict-review-row{border-top:1px solid #f1e5dc}
 .dict-review-row b,.dict-review-row small{overflow-wrap:anywhere}
 .dict-review-row small{display:block;margin-top:2px;color:var(--muted)}
-.dict-mark{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:44px;padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;color:#755d50;font-size:13px;font-weight:800}
+.dict-mark{position:relative;flex:none;display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid var(--line);border-radius:999px;background:#fff;color:#755d50}
 .dict-mark svg{width:17px;height:17px}
 .dict-mark[aria-pressed=true]{color:#fff;background:#a84220;border-color:#a84220}
 .dict-mark[aria-pressed=true] svg{fill:currentColor}
 .dict-review-labeled .dict-mark{border-radius:9px}
 .dict-review-labeled .dict-mark[aria-pressed=true]{background:#ffe1cc;border-color:#dfaa8c;color:#97391b}
-.dict-review-labeled .dict-mark[aria-pressed=true] svg{fill:none}
-.dict-review-card .dict-mark{width:100%;max-width:228px;border-radius:11px}
+.dict-review-labeled .dict-mark .dict-mark-check{position:absolute;right:3px;bottom:3px;display:grid;place-items:center;width:14px;height:14px;border:1px solid #dfaa8c;border-radius:50%;background:#fff5ed}
+.dict-review-labeled .dict-mark .dict-mark-check svg{width:10px;height:10px;fill:none}
+.dict-review-card .dict-mark{width:52px;border-radius:11px}
 .dict-review-card .dict-mark[aria-pressed=true]{background:#087868;border-color:#087868}
-.dict-review-count{margin-top:5px}
 .dict-review-card{display:grid;justify-items:center;gap:9px;padding:18px 12px;text-align:center}
 .dict-review-card b{font-size:24px;overflow-wrap:anywhere}
 .dict-review-card small{color:var(--muted)}
@@ -300,9 +303,9 @@ const playerLayouts={
 const requestedPlayer=new URLSearchParams(location.search).get('player');
 let playerLayout=Object.hasOwn(playerLayouts,requestedPlayer)?requestedPlayer:null;
 const dockLayouts={
-  icon:{name:'A1 · 进度优先',player:'报词时进度放在最上面，设置紧跟其后。「再听一次」「看答案」都在词卡下方。',review:'在词旁点「错题本」，胶囊按钮会亮起。再点一次取消。'},
-  labeled:{name:'A2 · 设置优先',player:'设置始终在最上面，进度在下面。「再听一次」「看答案」放进底部播放器的第一排。',review:'点「错题本」后，按钮亮起并显示勾号。再点一次取消。'},
-  guided:{name:'A3 · 纸笔专注',player:'上方先看进度，设置靠近词卡。「看答案」在词卡旁，「再听一次」在底部播放器。',review:'一次核对一个词。词卡里的「错题本」宽按钮亮起时，表示这个词已加入。'}
+  icon:{name:'A1 · 进度优先',player:'报词时进度放在最上面，设置紧跟其后。「再听一次」「看答案」都在词卡下方。',review:'点单词旁的书签，圆形按钮亮起。再点一次取消。'},
+  labeled:{name:'A2 · 设置优先',player:'设置始终在最上面，进度在下面。「再听一次」「看答案」放进底部播放器的第一排。',review:'点书签后，按钮亮起，书签旁出现小勾。再点一次取消。'},
+  guided:{name:'A3 · 纸笔专注',player:'上方先看进度，设置靠近词卡。「看答案」在词卡旁，「再听一次」在底部播放器。',review:'一次核对一个词。词卡下方的书签亮起时，表示这个词已加入。'}
 };
 const requestedDock=new URLSearchParams(location.search).get('dock');
 let dockLayout=Object.hasOwn(dockLayouts,requestedDock)?requestedDock:'icon';
@@ -777,16 +780,20 @@ function gameView(){
 }
 function dictMarkButton(index,style){
   const marked=st.dictMarked.has(index);
-  const symbol=style==='labeled'&&marked?'check':'bookmark';
+  const check=style==='labeled'&&marked?`<span class="dict-mark-check" aria-hidden="true">${icon('check')}</span>`:'';
   const word=safe(st.round[index][0]);
-  return action(`data-dict-mark="${index}" aria-label="${word} · 错题本"`,icon(symbol)+'错题本','dict-mark',false,marked);
+  return action(`data-dict-mark="${index}" aria-label="${word} · 错题本"`,icon('bookmark')+check,'dict-mark',false,marked);
 }
 function checkView(){
   const style=playerLayout&&playerLayout!=='reference'?'icon':dockLayout;
   const complete=action('data-check','完成核对','primary');
   const header=`<div class="dict-review-head">
-    <p>写错或漏写？点「错题本」加入，再点一次取消。</p>
-    <div class="dict-review-count" role="status">${st.dictMarked.size} 个词加入错题本</div>
+    <div class="dict-review-key">
+      <strong>${icon('bookmark')}错题本</strong>
+      <span class="dict-review-count" role="status">已加入 ${st.dictMarked.size} 个词</span>
+    </div>
+    <p>把纸上写的单词和屏幕上的答案逐个对照，仔细检查拼写。</p>
+    <p>写错或漏写的词，点一下书签。书签亮起就表示已加入，再点一次可以取消。全部核对完，点「完成核对」。</p>
   </div>`;
   if(style==='guided'){
     const i=st.dictReviewIndex;
@@ -898,7 +905,7 @@ const pageNotes={
   ],()=>`已配对 ${st.matched.size} / ${st.round.length} 组。`],
   check:['核对纸笔听写','报完词或点最后一词的「去核对」后进入。',[
     '用页面上的英文和释义核对纸上的答案。',
-    '点词旁的「错题本」加入，再点一次取消。上方词数随之更新。',
+    '点单词的书签加入错题本，再点一次取消。上方词数随之更新。',
     '点「完成核对」查看本轮结果。'
   ],()=>`本轮 ${st.round.length} 词，已加入错题本 ${st.dictMarked.size} 词。`],
   result:['练习结果','完成训练或听写核对后进入。',[
