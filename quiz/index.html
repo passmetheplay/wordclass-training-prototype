@@ -239,8 +239,16 @@ svg{width:18px;height:18px;display:block}.tile>div{min-width:0}.tile strong{font
   .side{position:static;padding:18px}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+.is-embedded{background:var(--bg)}
+.is-embedded :is(.preview-head,.status,.navigation,.side){display:none}
+.is-embedded .layout{display:block;max-width:none;margin:0;padding:0}
+.is-embedded .device{padding:0;border-radius:0;background:none;box-shadow:none}
+.is-embedded .phone-screen{height:100dvh;border-radius:0}
 </style></head>
 <body>
+<script>
+document.body.classList.toggle('is-embedded',new URLSearchParams(location.search).get('embed')==='1');
+</script>
 <header class="preview-head">
   <h1>小测</h1>
   <p>点按手机界面，查看当前页面的功能与操作说明。</p>
@@ -385,6 +393,7 @@ st.wrongBack='home';
 st.bookSelection={wrong:new Set(),favorite:new Set()};
 st.favoriteAdded=new Set();
 let playId=0,gameTimer=0,readCapture=null,readAudioUrl='',readPlayer=null;
+let gamePausedAt=0;
 const readStorage=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))||fallback}catch{return fallback}};
 const selectionKey='wordclass-training-textbook-v1';
 const savedSelection=readStorage(selectionKey,{});
@@ -548,7 +557,10 @@ function initializeRound(){
   }
   go('exercise');
   if(st.tool==='study')void say(current()[0]);
-  if(st.tool==='game')gameTimer=setInterval(()=>{
+  if(st.tool==='game')startGameClock();
+}
+function startGameClock(){
+  gameTimer=setInterval(()=>{
     const clock=view.querySelector('.game-clock');
     if(clock)clock.textContent=formatClock(gameTime());
   },500);
@@ -1558,7 +1570,30 @@ view.addEventListener('submit',event=>{
   const rows=value.split(/\r?\n/).map(line=>{const [raw,...parts]=line.trim().split(/[,，\t]/);return {en:raw.trim(),cn:parts.join('，').trim()||wordMap.get(raw.trim().toLowerCase())||'',include:true}}).filter(w=>validWord(w.en));
   if(rows.length)setRows(rows);else notify('请输入英文单词，每行一个。');
 });
-window.addEventListener('pagehide',clearReadAudio);
+window.addEventListener('pagehide',()=>{stop();clearReadAudio();});
+if(document.body.classList.contains('is-embedded')){
+  window.addEventListener('message',event=>{
+    if(event.source!==window.parent||event.origin!==location.origin)return;
+    if(event.data?.type==='wordclass-quiz-hide'){
+      const refresh=st.active||Boolean(readCapture);
+      stop();
+      if(readCapture)clearReadAudio();
+      else readPlayer?.pause();
+      if(gameTimer){
+        clearInterval(gameTimer);
+        gameTimer=0;
+        gamePausedAt=Date.now();
+      }
+      if(refresh)render();
+    }else if(event.data?.type==='wordclass-quiz-show'&&gamePausedAt){
+      if(st.page==='exercise'&&st.tool==='game'){
+        st.gameStartedAt+=Date.now()-gamePausedAt;
+        startGameClock();
+      }
+      gamePausedAt=0;
+    }
+  });
+}
 if(dictLayout||playerLayout||booksPreview){
   const previewHeader=document.querySelector('.preview-head');
   previewHeader.querySelector('h1').textContent=booksPreview?'小测':playerLayout==='reference'?'报听写 · 底部播放器':playerLayout?'报听写播放页方案':'报听写选词方案';
