@@ -339,7 +339,7 @@ const books = {
     ['Last weekend','stayed：停留|washed：洗|cleaned：打扫|watched：观看']
   ])
 };
-const comparisonUnits=[
+const fiveUpDictationUnits=[
   ...books[defaultBook],
   ...makeUnits([
     ['What can you do?','sing：唱歌|dance：跳舞|draw：画|swim：游泳|cook：烹饪|speak：说'],
@@ -360,7 +360,7 @@ const selectionKey='wordclass-training-textbook-v1';
 const savedSelection=readStorage(selectionKey,{});
 st.book=Object.hasOwn(books,savedSelection.book)?savedSelection.book:defaultBook;
 function currentUnits(){
-  if(dictLayout&&st.tool==='dict'&&st.book===defaultBook)return comparisonUnits;
+  if(st.tool==='dict'&&st.book===defaultBook)return fiveUpDictationUnits;
   return books[st.book];
 }
 function saveSelection(){
@@ -577,8 +577,7 @@ function inlineBookFields(){
   </div>`;
 }
 function dictBookPicker(){
-  if(!dictLayout)return bookPicker();
-  if(dictLayout==='cards')return `<p class="dict-edition">人教 PEP 版</p>${inlineBookFields()}`;
+  if(!dictLayout||dictLayout==='cards')return `<p class="dict-edition">人教 PEP 版</p>${inlineBookFields()}`;
   const inline=dictLayout==='list';
   const label=`<div><strong>${bookName(st.book)}</strong><small>人教 PEP 版</small></div>`;
   const control=inline?`data-inline-book-toggle aria-expanded="${Boolean(st.inlineBook)}" aria-controls="inline-book-fields"`:'data-open-book';
@@ -586,15 +585,16 @@ function dictBookPicker(){
     +(inline?(st.inlineBook?inlineBookFields():'<div id="inline-book-fields" hidden></div>'):'');
 }
 function dictUnitPicker(){
-  const cards=dictLayout==='cards';
+  const cards=!dictLayout||dictLayout==='cards';
+  const unitStyle=dictLayout?bUnitStyle:'count';
   const list=dictLayout==='list';
-  const grid=cards&&bUnitStyle==='number'||dictLayout==='compact';
+  const grid=cards&&unitStyle==='number'||dictLayout==='compact';
   const detailed=list||cards&&!grid;
-  const topics=list||cards&&bUnitStyle==='topic';
+  const topics=list||cards&&unitStyle==='topic';
   const layoutClass=grid?'dict-unit-grid':list?'dict-unit-list':cards?'dict-unit-cards':'actions';
   const units=currentUnits().map(([unit,title,words],i)=>{
     const selected=st.selectedUnits.has(i);
-    const meta=list||cards&&bUnitStyle==='count'?`<small>${words.length} 词</small>`:'';
+    const meta=list||cards&&unitStyle==='count'?`<small>${words.length} 词</small>`:'';
     const topic=topics?`<span${cards?` title="${safe(title)}"`:''}>${safe(title)}</span>`:'';
     const label=detailed?`<i class="training-check" aria-hidden="true">${selected?'✓':''}</i>
       <span class="unit-copy"><strong>${safe(unit)}</strong>${topic}</span>${meta}`:safe(unit);
@@ -865,7 +865,7 @@ const pageNotes={
     '确认后返回选词页，改选教材会重新选择单元和单词。'
   ],()=>`待确认 ${bookName(st.draftGrade+'-'+st.draftTerm)}。`],
   setup:[null,'从小测首页选择对应项目。',[
-    '选「教材单元」时可先切换教材，再多选一个或多个单元。',
+    '在「教材单元」里直接选年级和册别，再点选一个或多个单元。',
     '选「错题本」时直接从已有词条中勾词。',
     '支持逐词勾选、全选和清空。至少选一个词后才能开始。'
   ],()=>{
