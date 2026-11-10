@@ -44,42 +44,35 @@ svg{width:18px;height:18px;display:block}.tile>div{min-width:0}.tile strong{font
 .compare-switch{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
 .compare-switch button{min-height:34px}
 .compare-unit-styles{display:flex;flex-basis:100%;flex-wrap:wrap;gap:6px}
-.compare-states{display:flex;flex-wrap:wrap;gap:6px;margin-left:auto}
-.dict-player{min-height:100%;display:flex;flex-direction:column}
-.dict-player .player-status{font-size:12px;color:var(--muted);font-weight:750}
+.compare-states{display:flex;flex-basis:100%;flex-wrap:wrap;gap:6px}
+.dict-player{min-height:100%;display:flex;flex-direction:column;gap:16px}
+.dict-player .player-top,.dict-player .player-footer{display:grid;gap:12px}
+.dict-player .player-top{padding-top:6px}
+.dict-player .player-status{font-size:13px;color:var(--muted);font-weight:750}
 .dict-player .player-status strong{color:var(--ink)}
-.dict-player .progress{margin:7px 0 12px}
-.dict-player .dict-options{margin-bottom:12px}
-.dict-player .player-word{display:grid;justify-items:center;align-content:center;gap:5px;min-height:104px;padding:16px 10px;text-align:center}
-.dict-player .player-word strong{max-width:100%;font-size:25px;line-height:1.2;overflow-wrap:anywhere}
-.dict-player .player-word p{font-size:12px;color:var(--muted)}
-.dict-player .player-word svg{width:26px;height:26px;color:var(--mint)}
-.dict-player-reference .player-word{flex:1}
-.dict-player-inline .player-word{border:1px solid var(--line);border-radius:15px;background:#fffaf4}
-.dict-player-focus .player-word{flex:1;align-content:start;padding-top:24px}
-.dict-player-focus .player-word strong{font-size:30px}
-.dict-player .player-footer{margin-top:auto;padding-top:12px}
-.dict-player .player-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
-.dict-player .player-row button{min-height:42px;padding-inline:4px;font-size:12px}
-.dict-player .player-icon-row{display:flex;align-items:center;justify-content:space-between;gap:5px;max-width:340px;margin:auto}
-.dict-player .player-icon{display:grid;place-items:center;flex:none;width:38px;height:38px;padding:0;border:1px solid var(--line);border-radius:50%;background:#fff}
-.dict-player .player-icon.main{width:48px;height:48px;border:0;background:var(--orange);color:#fff}
-.dict-player .player-icon[aria-pressed=true]{border-color:#dbac91;background:#fff0e4;color:#8b391c}
-.dict-player .player-links{display:flex;justify-content:center;gap:12px;margin:4px 0 10px}
-.dict-player .player-link,.dict-review-footer .player-link{min-height:34px;padding:4px 5px;border:0;background:none;color:#8b391c;font-size:12px;font-weight:750}
-.dict-player-focus .player-links{justify-content:flex-end;margin:0}
-.dict-player-focus .player-row{margin-bottom:7px}
-.dict-player .player-start{align-self:stretch}
+.dict-player .progress{margin:6px 0 0}
+.dict-player .dict-options{margin:0}
+.dict-player .player-middle{flex:1;display:grid;align-content:center;gap:12px}
+.dict-player .player-word{display:grid;justify-items:center;align-content:center;gap:7px;min-height:114px;padding:16px 12px;text-align:center;border:1px solid var(--line);border-radius:16px;background:#fff3e7}
+.dict-player .player-word strong{max-width:100%;font-size:24px;line-height:1.25;overflow-wrap:anywhere}
+.dict-player .player-word p{font-size:13px;color:var(--muted);line-height:1.4}
+.dict-player .player-word svg{width:23px;height:23px;color:#8b391c}
+.dict-player.is-ready .player-word{min-height:146px}
+.dict-player .player-footer{padding:14px 0 6px;border-top:1px solid var(--line)}
+.dict-player .player-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) minmax(0,1fr);gap:7px}
+.dict-player .player-row button{min-height:44px;padding:6px 3px;font-size:13px}
+.dict-player .player-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.dict-player .player-link{display:flex;align-items:center;justify-content:center;gap:5px;min-height:44px;padding:6px 4px;border:1px solid var(--line);border-radius:10px;background:#fff;color:#8b391c;font-size:13px;font-weight:750}
+.dict-player .player-link svg{width:16px;height:16px;flex:none}
+.dict-player .player-link[aria-pressed=true]{background:#ffebdb;border-color:#e2b49b}
+.dict-review-footer .player-link{min-height:44px;border:0;background:none;color:#8b391c;font-size:13px;font-weight:750}
+.dict-player-inline{min-height:0}
+.dict-player-focus .player-word,.dock-guided .player-word{justify-items:start;text-align:left}
+.dock-labeled .player-word{background:#fffdf9}
+.dock-guided .player-middle{gap:10px}
+.dock-guided .player-middle>.player-link{justify-self:start;padding-inline:10px}
+.dock-guided .player-footer>.player-link{justify-self:center;padding-inline:12px}
 .dock-variants{display:flex;flex-basis:100%;flex-wrap:wrap;gap:6px}
-.dict-player-reference .player-footer{padding:12px 0 2px}
-.dict-player-reference .player-icon{width:42px;height:42px}
-.dict-player-reference .player-icon.main{width:48px;height:48px}
-.dock-labeled .player-word{flex:0;min-height:128px;margin:14px 0 0;border:1px solid var(--line);border-radius:16px;background:#fffaf4}
-.dock-labeled .player-icon-row{gap:3px}
-.dock-labeled .player-icon,.dock-labeled .player-icon.main{width:auto;min-width:0;flex:1;height:50px;border-radius:12px;gap:3px;padding:4px 2px;font-size:9px;font-weight:750}
-.dock-labeled .player-icon svg{width:16px;height:16px}
-.dock-guided .player-word{justify-items:start;align-content:start;text-align:left;padding:26px 4px 10px}
-.dock-guided .player-footer{display:grid;gap:7px}
 .dict-review{display:flex;flex-direction:column;min-height:100%;gap:10px}
 .dict-review-head{padding:0 0 3px}
 .dict-review-head p,.dict-review-count{font-size:12px;color:var(--muted);line-height:1.5}
@@ -89,10 +82,17 @@ svg{width:18px;height:18px;display:block}.tile>div{min-width:0}.tile strong{font
 .dict-review-row+.dict-review-row{border-top:1px solid #f1e5dc}
 .dict-review-row b,.dict-review-row small{overflow-wrap:anywhere}
 .dict-review-row small{display:block;margin-top:2px;color:var(--muted)}
-.dict-mark{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:38px;padding:5px 8px;border:1px solid var(--line);border-radius:9px;background:#fff;color:#8b391c;font-size:11px;font-weight:800}
+.dict-mark{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:44px;padding:5px 8px;border:1px solid #e4baa4;border-radius:9px;background:#fff5ed;color:#8b391c;font-size:13px;font-weight:800}
 .dict-mark svg{width:17px;height:17px}
 .dict-mark[aria-pressed=true]{color:var(--mint);background:#eaf8f4;border-color:#c2e3da}
 .dict-mark[aria-pressed=true] svg{fill:#bfe5dc}
+.dict-mark-group{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex:none}
+.dict-mark-group small{color:var(--mint);font-weight:750;white-space:nowrap}
+.dict-review-labeled .dict-mark:not([aria-pressed=true]){background:#a84220;border-color:#a84220;color:#fff}
+.dict-review-card .dict-mark-group{display:grid;justify-items:center;width:100%}
+.dict-review-card .dict-mark{width:100%;max-width:228px}
+.dict-review-count{margin-top:5px}
+.dict-review-head .notice{margin:7px 0 0}
 .dict-review-card{display:grid;justify-items:center;gap:9px;padding:18px 12px;text-align:center}
 .dict-review-card b{font-size:24px;overflow-wrap:anywhere}
 .dict-review-card small{color:var(--muted)}
@@ -130,8 +130,8 @@ svg{width:18px;height:18px;display:block}.tile>div{min-width:0}.tile strong{font
 .setup-actions .mini{min-width:48px}
 .setup-source .actions{margin-top:0}
 .setup-source .unit-hint{margin:8px 0 0}
-.source-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;padding:4px;margin-bottom:12px;border:1px solid #eddfd4;border-radius:13px;background:#f1e7df}
-.source-tabs button{min-height:38px;padding:6px 8px;border:1px solid transparent;border-radius:9px;background:transparent;color:#6f5c50;font-size:13px;font-weight:800}
+.source-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;margin-bottom:12px;border:1px solid #eddfd4;border-radius:13px;background:#f1e7df}
+.source-tabs button{min-height:44px;padding:6px 4px;border:1px solid transparent;border-radius:9px;background:transparent;color:#6f5c50;font-size:13px;font-weight:800}
 .source-tabs button[aria-selected=true]{background:#fff;color:#983c1c;border-color:#efdfd4;box-shadow:0 2px 5px #51311f12}
 .source-panel:focus-visible{outline:2px solid #30a89a;outline-offset:1px;border-radius:12px}
 .wrong-empty{text-align:center;padding:24px 14px}
@@ -290,16 +290,16 @@ const bUnitStyles={
 const requestedUnitStyle=new URLSearchParams(location.search).get('unitStyle');
 let bUnitStyle=Object.hasOwn(bUnitStyles,requestedUnitStyle)?requestedUnitStyle:'count';
 const playerLayouts={
-  reference:{name:'A · 底部播放器',hint:'参考录屏的布局。词卡居中，上一词、重听、播放、下一词和答案开关都在底部。'},
+  reference:{name:'A · 底部播放器',hint:'上一词、播放和下一词固定在底部。'},
   inline:{name:'B · 紧凑词卡',hint:'词卡、答案和播放键集中在上半屏。上一词、播放、下一词一行排开。'},
-  focus:{name:'C · 纸笔模式',hint:'上方留给进度与答案，底部用一颗宽按钮开始、暂停或继续。上一词、重听和下一词放在它上方。'}
+  focus:{name:'C · 纸笔模式',hint:'进度和设置在上方，答案靠左，播放和切词在底部。'}
 };
 const requestedPlayer=new URLSearchParams(location.search).get('player');
 let playerLayout=Object.hasOwn(playerLayouts,requestedPlayer)?requestedPlayer:null;
 const dockLayouts={
-  icon:{name:'A1 · 图标列表',player:'居中词卡，底部一排图标。',review:'点每个错词右边的书签即可加入。'},
-  labeled:{name:'A2 · 明示按钮',player:'词卡紧凑对齐，底部图标配文字。',review:'在列表点「加入错题本」，收录后显示「已加入」。'},
-  guided:{name:'A3 · 逐词核对',player:'底部用宽按钮控制播报，切词和重听放在上方。',review:'一次核对一个词，按需加入错题本，再切到下一词。'}
+  icon:{name:'A1 · 进度优先',player:'报词时进度放在最上面，设置紧跟其后。「再听一次」「看答案」都在词卡下方。',review:'在词旁点「加入错题本」。加入后同一个位置显示「已加入 · 撤销」。'},
+  labeled:{name:'A2 · 设置优先',player:'设置始终在最上面，进度在下面。「再听一次」「看答案」放进底部播放器的第一排。',review:'每词右侧有明显的「加入错题本」按钮，加入后分开展示「已加入」和「撤销」。'},
+  guided:{name:'A3 · 纸笔专注',player:'上方先看进度，设置靠近词卡。「看答案」在词卡旁，「再听一次」在底部播放器。',review:'一次核对一个词，词卡内有宽按钮加入错题本，加入后显示「已加入错题本」和「撤销」。'}
 };
 const requestedDock=new URLSearchParams(location.search).get('dock');
 let dockLayout=Object.hasOwn(dockLayouts,requestedDock)?requestedDock:'icon';
@@ -395,10 +395,12 @@ function toggleDictMark(index){
       save();
     }
     st.dictMarked.delete(index);
+    st.notice=word[0]+(wrong[key]?' 已撤销这次加入，原来的记录还在。':' 已撤销，已从错题本移出。');
   }else{
     const previous=wrong[key];
     addWrong(word,'单词报听写');
     st.dictMarked.set(index,{previous,saved:wrong[key]});
+    st.notice=word[0]+' 已加入错题本。';
   }
   render();
   view.querySelector(`[data-dict-mark="${index}"]`)?.focus({preventScroll:true});
@@ -517,7 +519,7 @@ function home(){
   const tileCopy={read:['朗读测试','先听再读'],translate:['中英互译','看词选义'],game:['消消乐','中英配对'],photo:['拍照识别','导入错词']};
   return `<section class="dict-feature" aria-label="单词报听写">
     <div class="dict-intro"><span class="dict-symbol">${icon('dict')}</span><h2>单词报听写</h2></div>
-    <p>可以选教材单元里的词，也可以从错题本选词。</p>
+    <p>可以从教材单元、错题本或收藏本选词。</p>
     ${action('data-tool="dict"','去报听写','primary')}
   </section>
   <section class="home-module" aria-labelledby="home-training-title">
@@ -549,7 +551,7 @@ function bookFlow(){
     ${isGrade?'':`<div class="book-confirm">${action('data-book-confirm',draftBook===st.book?'确认当前教材':'切换到'+bookName(draftBook),'primary')}</div>`}
   </div>`;
 }
-const wordSources=[['unit','教材单元'],['wrong','错题本']];
+const wordSources=[['unit','教材单元'],['wrong','错题本'],['favorite','收藏本']];
 function dictSourceTabs(content){
   const tabs=wordSources.map(([key,label])=>{
     const selected=key===st.source;
@@ -644,11 +646,13 @@ function setupView(){
     <div class="scope-title"><h2 class="section-title">选择单元</h2><small>可多选</small></div>
     ${dictUnitPicker()}
     ${st.selectedUnits.size?'':'<p class="hint unit-hint">选好单元后，就能勾选要练的词。</p>'}
-    </section>`:available.length?'':`<section class="card wrong-empty"><p class="hint">错题本还没有单词。</p>
-    ${action('data-wrong-example','加入 3 个示例错词','mini')}</section>`;
+    </section>`:available.length?'':st.source==='favorite'
+    ?'<section class="card wrong-empty"><p class="hint">收藏本还没有单词。去朗读测试给单词点星星，就能来这里选词。</p></section>'
+    :`<section class="card wrong-empty"><p class="hint">错题本还没有单词。</p>
+      ${action('data-wrong-example','加入 3 个示例错词','mini')}</section>`;
   const words=available.length?`<section class="card"><div class="between words-head"><h2 class="section-title">勾选单词</h2>
     <div class="setup-actions">${action('data-all','全选','mini',st.selected.size===available.length)}${action('data-clear','清空','mini',!st.selected.size)}</div></div>
-    ${isUnit?selectedGroups().map(({unit,title,words,index})=>`<section class="word-group"><h3>${safe(unit)} · ${safe(title)}</h3>${wordList(words,index)}</section>`).join(''):wordList(available,'wrong')}
+    ${isUnit?selectedGroups().map(({unit,title,words,index})=>`<section class="word-group"><h3>${safe(unit)} · ${safe(title)}</h3>${wordList(words,index)}</section>`).join(''):wordList(available,st.source)}
     </section>`:'';
   return dictSourceTabs(scope+words);
 }
@@ -667,52 +671,32 @@ function dictExercise(){
   const layout=playerLayout||'reference';
   const dock=layout==='reference'?dockLayout:'';
   const started=st.dictStarted;
-  const playLabel=!started?'开始报词':st.active?'暂停报词':'继续报词';
   const visible=st.dictAnswerVisible;
-  const revealLabel=visible?'隐藏答案':'显示答案';
-  const end=st.i===st.round.length-1;
-  const nextLabel=end?'去核对':'下一词';
   const [en,cn]=current();
   const word=started
     ?visible?`<strong lang="en">${safe(en)}</strong><p>${safe(cn)}</p>`
-      :icon('dict')+'<strong>答案已遮住</strong>'
-    :`<strong>准备就绪</strong><p>本轮 ${st.round.length} 词 · 准备好纸笔</p>`;
-  const status=started?`<div class="between player-status">
+      :icon('dict')+'<strong>听一听，写一写</strong><p>答案已藏起</p>'
+    :icon('dict')+`<strong>准备就绪</strong><p>本轮 ${st.round.length} 词</p><p>准备好纸和笔。听到词，就写在纸上。</p>`;
+  const status=started?`<div class="player-progress"><div class="between player-status">
     <strong>第 ${st.i+1} / ${st.round.length} 词</strong><span>${st.active?'正在报词':'已暂停'}</span>
-  </div>${progress(st.i+1,st.round.length,false)}`:'';
-  const play=action('data-play="dict"',playLabel,'primary player-start');
-  const reveal=action('data-reveal',revealLabel,'player-link',false,visible);
-  const repeat=action('data-play="one"','重听','player-link');
+  </div>${progress(st.i+1,st.round.length,false)}</div>`:'';
+  const settings=dictSettings();
+  const play=action('data-play="dict"',!started?'开始报词':st.active?'暂停报词':'继续报词','primary player-start');
+  const reveal=started?action('data-reveal',icon('eye')+(visible?'藏起答案':'看答案'),'player-link',false,visible):'';
+  const repeat=started?action('data-play="one"',icon('repeat')+'再听一次','player-link'):'';
+  const secondary=started?`<div class="player-links" role="group" aria-label="当前单词">${repeat}${reveal}</div>`:'';
   const previous=action('data-move="-1"','上一词','pill',st.i===0);
-  const next=action('data-move="1"',nextLabel,'pill');
-  let controls=play;
-  let extra='';
-  if(started){
-    if(dock==='guided'){
-      controls=`<div class="player-links">${reveal}</div>
-        <div class="player-row">${previous}${action('data-play="one"','重听','pill')}${next}</div>${play}`;
-    }else if(dock){
-      const iconButton=(attrs,name,label,disabled=false,pressed=null,primary=false)=>
-        action(`${attrs} aria-label="${label}" title="${label}"`,icon(name)+(dock==='labeled'?`<span>${label}</span>`:''),'player-icon'+(primary?' main':''),disabled,pressed);
-      controls=`<div class="player-icon-row" role="group" aria-label="播放控制">
-        ${iconButton('data-move="-1"','previous','上一词',st.i===0)}
-        ${iconButton('data-play="one"','repeat','重听本词')}
-        ${iconButton('data-play="dict"',st.active?'pause':'replay',playLabel,false,null,true)}
-        ${iconButton('data-move="1"',end?'check':'right',nextLabel)}
-        ${iconButton('data-reveal','eye',revealLabel,false,visible)}
-      </div>`;
-    }else if(layout==='inline'){
-      extra=`<div class="player-links">${repeat}${reveal}</div>`;
-      controls=`<div class="player-row">${previous}${play}${next}</div>`;
-    }else{
-      extra=`<div class="player-links">${reveal}</div>`;
-      controls=`<div class="player-row">${previous}${action('data-play="one"','重听','pill')}${next}</div>${play}`;
-    }
-  }
-  const footer=layout==='inline'?'':'player-footer';
-  return `<div class="dict-player dict-player-${layout}${dock?' dock-'+dock:''}">
-    ${status}${dictSettings()}<div class="player-word">${word}</div>${extra}${timerNote()}
-    <div class="${footer}">${controls}</div>
+  const next=action('data-move="1"',st.i===st.round.length-1?'去核对':'下一词','pill');
+  const controls=started?`<div class="player-row" role="group" aria-label="播放控制">${previous}${play}${next}</div>`:play;
+  const top=dock==='labeled'?settings+status:status+(dock==='guided'?'':settings);
+  return `<div class="dict-player dict-player-${layout}${dock?' dock-'+dock:''}${started?'':' is-ready'}">
+    ${top?`<div class="player-top">${top}</div>`:''}
+    <div class="player-middle">
+      <div class="player-word">${word}</div>
+      ${dock==='guided'?reveal+settings:dock==='labeled'?'':secondary}
+      ${timerNote()}
+    </div>
+    <div class="player-footer">${dock==='guided'?repeat:dock==='labeled'?secondary:''}${controls}</div>
   </div>`;
 }
 const phonetics={name:'neɪm',nice:'naɪs',ear:'ɪr',hand:'hænd',listen:'ˈlɪsən',help:'hɛlp',kind:'kaɪnd',strict:'strɪkt',young:'jʌŋ',funny:'ˈfʌni',polite:'pəˈlaɪt',helpful:'ˈhɛlpfəl'};
@@ -775,36 +759,40 @@ function gameView(){
   <p class="hint game-hint">${audio?'点左侧声音卡，再选右侧答案。':'将英文单词与对应的中文释义配对。'}</p>
   <div class="pairs">${col('L',st.gameWords.map((_,i)=>i))}${col('R',st.gameRight)}</div>${timerNote()}`;
 }
-function dictMarkButton(index,withText){
+function dictMarkButton(index,style){
   const marked=st.dictMarked.has(index);
-  const label=marked?'从本轮错题中撤销':'加入错题本';
+  const label=marked?'撤销':'加入错题本';
   const word=safe(st.round[index][0]);
-  return action(`data-dict-mark="${index}" aria-label="${word}：${label}" title="${label}"`,
-    icon('bookmark')+(withText?(marked?'已加入':'加入错题本'):''),'dict-mark',false,marked);
+  const text=marked&&style==='icon'?'已加入 · 撤销':label;
+  const button=action(`data-dict-mark="${index}" aria-label="${word}：${marked?'撤销这次加入':label}"`,
+    (style==='icon'||!marked?icon('bookmark'):'')+text,'dict-mark',false,marked);
+  if(!marked||style==='icon')return button;
+  return `<div class="dict-mark-group"><small>${style==='guided'?'已加入错题本':'已加入'}</small>${button}</div>`;
 }
 function checkView(){
   const style=playerLayout&&playerLayout!=='reference'?'icon':dockLayout;
   const complete=action('data-check','完成核对','primary');
   const header=`<div class="dict-review-head">
-    <p>对照纸上的答案，把写错或漏写的词加入错题本。</p>
-    <div class="dict-review-count" role="status">本轮已加入 ${st.dictMarked.size} 词</div>
+    <p>对照纸上写的词。写错或漏写了，就点「加入错题本」。点「撤销」可以取消这次加入。</p>
+    <div class="dict-review-count">本轮已加入 ${st.dictMarked.size} 词</div>
+    ${timerNote()}
   </div>`;
   if(style==='guided'){
     const i=st.dictReviewIndex;
     const [en,cn]=st.round[i];
     return `<div class="dict-review">${header}
       <div class="card dict-review-card"><small>第 ${i+1} / ${st.round.length} 词</small>
-        <b lang="en">${safe(en)}</b><small>${safe(cn)}</small>${dictMarkButton(i,true)}
+        <b lang="en">${safe(en)}</b><small>${safe(cn)}</small>${dictMarkButton(i,style)}
       </div>
       <div class="dict-review-footer"><div class="split">
         ${action('data-review-move="-1"','上一词','pill',i===0)}
         ${action('data-review-move="1"','下一词','pill',i===st.round.length-1)}
       </div>${complete}</div></div>`;
   }
-  return `<div class="dict-review">${header}<div class="dict-review-list">
+  return `<div class="dict-review dict-review-${style}">${header}<div class="dict-review-list">
     ${st.round.map(([en,cn],i)=>`<div class="dict-review-row">
       <div><b lang="en">${safe(en)}</b><small>${safe(cn)}</small></div>
-      ${dictMarkButton(i,style==='labeled')}</div>`).join('')}
+      ${dictMarkButton(i,style)}</div>`).join('')}
   </div><div class="dict-review-footer">${complete}</div></div>`;
 }
 function dictResultView(){
@@ -866,7 +854,7 @@ const pageNotes={
   ],()=>`待确认 ${bookName(st.draftGrade+'-'+st.draftTerm)}。`],
   setup:[null,'从小测首页选择对应项目。',[
     '在「教材单元」里直接选年级和册别，再点选一个或多个单元。',
-    '选「错题本」时直接从已有词条中勾词。',
+    '选「错题本」或「收藏本」时，直接从已有单词里勾词。',
     '支持逐词勾选、全选和清空。至少选一个词后才能开始。'
   ],()=>{
     const available=pool().length;
@@ -901,7 +889,7 @@ const pageNotes={
   ],()=>`已配对 ${st.matched.size} / ${st.round.length} 组。`],
   check:['核对纸笔听写','报完词或点最后一词的「去核对」后进入。',[
     '用页面上的英文和释义核对纸上的答案。',
-    '点词旁的收录操作，立即加入错题本。再点一次可撤销本轮收录。',
+    '点词旁的「加入错题本」即时收录，点「撤销」取消这次加入。',
     '点「完成核对」查看本轮结果。'
   ],()=>`本轮 ${st.round.length} 词，已加入错题本 ${st.dictMarked.size} 词。`],
   result:['练习结果','完成训练或听写核对后进入。',[
@@ -929,8 +917,8 @@ function renderNote(title){
   const dock=playerLayout==='reference'&&st.tool==='dict'&&['dict','check','result'].includes(key)?dockLayouts[dockLayout]:null;
   let steps=defaultSteps;
   if(player)steps=[dock?.player||player.hint,'点开始才播报。答案开关对本轮后续单词也生效。','听写结束后可进入纸笔核对。'];
-  if(dock&&key==='check')steps=[dock.review,'错词即时收录，再点一次可以撤销。','完成后可从结果页回看答案。'];
-  if(layout)steps=[layout.bookHint,unitStyle?.hint||layout.unitHint,'选好单元后勾词，再点「开始听写」。也可以从「错题本」选词。'];
+  if(dock&&key==='check')steps=[dock.review,'点「加入错题本」立即收录，点「撤销」取消这次加入。','完成后可从结果页回看答案。'];
+  if(layout)steps=[layout.bookHint,unitStyle?.hint||layout.unitHint,'选好单元后勾词，再点「开始听写」。也可以从「错题本」或「收藏本」选词。'];
   pageNote.innerHTML=`<h2 id="note-title">${dock?.name||player?.name||unitStyle?.name||layout?.name||label||title+' · 选词'}</h2>
     <section><h3>怎么进入</h3><p>${entry}</p></section>
     <section><h3>怎么操作</h3><ol>${steps.map(step=>'<li>'+step+'</li>').join('')}</ol></section>
@@ -944,12 +932,13 @@ function renderComparisonNav(){
     const styles=playerLayout==='reference'?`<div class="dock-variants" role="group" aria-label="底部播放器样式">
       ${Object.entries(dockLayouts).map(([key,layout])=>action(`data-dock-option="${key}"`,layout.name,'pill',false,key===dockLayout)).join('')}
     </div>`:'';
-    comparisonNav.innerHTML=layouts+`<div class="compare-states" role="group" aria-label="预览页面状态">
+    comparisonNav.innerHTML=(styles||layouts)+`<div class="compare-states" role="group" aria-label="预览页面状态">
+      ${action('data-player-state="setup"','看选词页','mini')}
       ${action('data-player-state="ready"','看准备页','mini')}
       ${action('data-player-state="answer"','看答案状态','mini')}
       ${action('data-player-state="check"','看核对页','mini')}
       ${action('data-player-state="result"','看结果页','mini')}
-    </div>`+styles;
+    </div>`;
     return;
   }
   const layouts=Object.entries(dictLayouts).map(([key,layout])=>
@@ -960,6 +949,7 @@ function renderComparisonNav(){
   comparisonNav.innerHTML=layouts+styles;
 }
 function showPlayerPreview(state){
+  if(state==='setup'){setup('dict');return;}
   if(st.tool!=='dict'||!['exercise','check','result'].includes(st.page)){
     st.book=defaultBook;
     setup('dict');
@@ -1121,7 +1111,7 @@ async function autoSpeak(){
     for(let j=0;j<st.repeats;j++){
       const success=await speakCurrent();
       if(playId!==id)return;
-      if(!success){stop();notify('当前浏览器的语音不可用。可以显示答案并手动下一词。');return;}
+      if(!success){stop();notify('语音不可用，可以点「看答案」或「下一词」。');return;}
       await wait(st.gap*1000);
       if(playId!==id)return;
     }
@@ -1233,7 +1223,7 @@ document.addEventListener('click',async event=>{
     stop();
     const id=playId;
     render();
-    if(!await speakCurrent()&&playId===id)notify('语音不可用，可显示答案。');
+    if(!await speakCurrent()&&playId===id)notify('语音不可用，可以点「看答案」。');
     return;
   }
   if(d.speak){
@@ -1262,6 +1252,7 @@ document.addEventListener('click',async event=>{
   if(d.dictMark!==undefined){toggleDictMark(Number(d.dictMark));return;}
   if(d.reviewMove){
     st.dictReviewIndex+=Number(d.reviewMove);
+    st.notice='';
     render();
     return;
   }
@@ -1286,8 +1277,10 @@ document.addEventListener('click',async event=>{
 view.addEventListener('keydown',event=>{
   const tab=event.target.closest('.source-tabs [role="tab"]');
   if(!tab||!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
-  const [first,last]=tab.parentElement.querySelectorAll('[role="tab"]');
-  const target=event.key==='Home'?first:event.key==='End'?last:tab===first?last:first;
+  const tabs=[...tab.parentElement.querySelectorAll('[role="tab"]')];
+  const index=tabs.indexOf(tab);
+  const offset=event.key==='ArrowRight'?1:-1;
+  const target=event.key==='Home'?tabs[0]:event.key==='End'?tabs.at(-1):tabs[(index+offset+tabs.length)%tabs.length];
   event.preventDefault();
   target.click();
 });
@@ -1350,7 +1343,7 @@ view.addEventListener('submit',event=>{
 window.addEventListener('pagehide',clearReadAudio);
 if(dictLayout||playerLayout){
   const previewHeader=document.querySelector('.preview-head');
-  previewHeader.querySelector('h1').textContent=playerLayout?'报听写播放页方案':'报听写选词方案';
+  previewHeader.querySelector('h1').textContent=playerLayout==='reference'?'报听写 · 底部播放器':playerLayout?'报听写播放页方案':'报听写选词方案';
   previewHeader.querySelector('p').textContent=playerLayout?'用同一组 5 个词比较播放页，点开始才播报。':'切换方案，试试怎么选教材、单元和单词。';
   if(playerLayout)comparisonNav.setAttribute('aria-label','对比听写播放页方案');
   comparisonNav.hidden=false;
