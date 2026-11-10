@@ -6,6 +6,7 @@
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 12% 0%,#ffe5cc,transparent 60%),linear-gradient(130deg,#fcf5ed,#f1f6f0);min-height:100dvh}button,input,select,textarea{font:inherit}button{cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid #30a89a;outline-offset:2px}button:disabled{cursor:default;opacity:.52}h1,h2,h3,p{margin:0}small{font-size:12px}[hidden]{display:none!important}
 .status{display:flex;justify-content:space-between;padding:11px 19px 7px;font-size:11px;font-weight:800;color:#53443a;background:#fff4e7}.app-header{display:grid;grid-template-columns:40px minmax(0,1fr) 40px;align-items:center;gap:8px;padding:6px 16px;border-bottom:1px solid #f2e4d9;background:#fff4e7;min-height:54px}
 .app-header h1{grid-column:2;grid-row:1;text-align:center;font-size:19px;line-height:1.2;letter-spacing:-.035em}
+.app-header .book-remove-action{grid-column:3;grid-row:1;justify-self:center;width:44px;min-height:44px;padding:0;color:#8b391c}
 .app-header.is-home h1{grid-column:1/-1;text-align:left;font-size:23px}.back,.chip,.mini{border:1px solid var(--line);background:#fff;border-radius:99px;font-weight:750;font-size:12px;padding:8px 11px}.app-header .back{grid-column:1;grid-row:1;width:36px;height:36px;padding:0;display:grid;place-items:center;border-radius:11px}.app-header .back svg{width:16px;height:16px}.view{padding:16px;flex:1}.navigation{display:grid;grid-template-columns:repeat(4,1fr);padding:10px 5px;background:#fff;border-top:1px solid #f1e1d5}.navigation span{display:grid;justify-items:center;gap:3px;font-size:10px;color:#7d6c60;font-weight:750}.navigation strong{font-size:17px;font-weight:700}.navigation .active{color:var(--orange)}
 .dict-feature{background:linear-gradient(135deg,#ffe0c7 0%,#fff2e5 78%);border:1px solid #f2c5a7;border-radius:20px;padding:15px;margin-bottom:16px;overflow:hidden;position:relative}
 .dict-feature::after{content:"";position:absolute;right:-26px;top:-33px;width:133px;height:133px;border:1px solid #c9693a20;border-radius:50%;box-shadow:0 0 0 12px #c9693a13,0 0 0 24px #c9693a0a;pointer-events:none}
@@ -284,7 +285,8 @@ const tools={
 const bookPracticeModes={
   study:['学单词','study'],
   dict:['报听写','dict'],
-  meaning:['中英互译','translate']
+  meaning:['中英互译','translate'],
+  game:['消消乐','game']
 };
 const studySteps=[['学','认识单词'],['读','跟读单词'],['练','选择词义'],['拼','听音拼词'],['写','根据词义写单词']];
 const firstBookUnits=[
@@ -952,7 +954,6 @@ function bookActionFooter(){
   return `<div class="book-action-row" role="group" aria-label="已选单词操作">
     ${Object.entries(bookPracticeModes).map(([key,[label]])=>
       action(`data-practice-mode="${key}"`,label)).join('')}
-    ${action('data-remove-book-words','移出')}
   </div>`;
 }
 const pageNotes={
@@ -1015,11 +1016,11 @@ const pageNotes={
   ],()=>st.rows.length?`有 ${st.rows.length} 条词条待核对。`:st.photoUrl?'已载入照片，可继续使用示例或手动输入。':'等待导入词单。'],
   wrong:['错题本','从小测首页或听写结果页进入。',[
     '查看每个词的释义和累计收录次数。',
-    '勾选单词或点「全选」，再点底部的练习方式。选好后也可点「移出」，一次移出所选词。'
+    '勾选单词或点「全选」，再点底部的练习方式。选好后也可点右上角的「移出」，一次移出所选词。'
   ],()=>`当前有 ${bookRows('wrong').length} 个词。`],
   favorite:['收藏本','从小测首页的「词本」进入。',[
     '查看收藏的单词、释义和累计收录次数。',
-    '勾选单词或点「全选」，再点底部的练习方式。选好后也可点「移出」，一次取消所选词的收藏。'
+    '勾选单词或点「全选」，再点底部的练习方式。选好后也可点右上角的「移出」，一次取消所选词的收藏。'
   ],()=>`当前有 ${bookRows('favorite').length} 个词。`],
   study:['学单词','在词本勾选单词后点「学单词」。',[
     '学释义和发音，再跟读一遍。',
@@ -1102,7 +1103,8 @@ function render(){
   const title={home:'小测',grade:'切换教材',term:'切换教材',setup:toolTitle,exercise:toolTitle,check:'核对答案',result:'练习结果',photo:'拍照识别',...bookNames}[st.page];
   const backIcon='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></svg>';
   heading.classList.toggle('is-home',homePage);
-  heading.innerHTML=`${homePage?'':action('data-back aria-label="返回"',backIcon,'back')}<h1>${title}</h1>`;
+  const removeAction=practiceAction?action('data-remove-book-words','移出','mini book-remove-action'):'';
+  heading.innerHTML=`${homePage?'':action('data-back aria-label="返回"',backIcon,'back')}<h1>${title}</h1>${removeAction}`;
   view.classList.toggle('is-book-flow',switching);
   document.querySelector('.navigation').hidden=switching;
   view.innerHTML=({home,grade:bookFlow,term:bookFlow,setup:setupView,exercise,check:checkView,result:resultView,photo:photoView,wrong:()=>bookView('wrong'),favorite:()=>bookView('favorite')})[st.page]();
