@@ -43,6 +43,7 @@ svg{width:18px;height:18px;display:block}.tile>div{min-width:0}.tile strong{font
 .scope-title small{color:var(--muted);font-size:11px}
 .compare-switch{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
 .compare-switch button{min-height:34px}
+.compare-unit-styles{display:flex;flex-basis:100%;flex-wrap:wrap;gap:6px}
 .compare-states{display:flex;gap:6px;margin-left:auto}
 .dict-player{min-height:100%;display:flex;flex-direction:column}
 .dict-player .player-status{font-size:12px;color:var(--muted);font-weight:750}
@@ -87,7 +88,10 @@ svg{width:18px;height:18px;display:block}.tile>div{min-width:0}.tile strong{font
 .dict-unit-option .unit-copy{display:grid;gap:3px;min-width:0;flex:1}
 .dict-unit-option .unit-copy span{font-size:11px;font-weight:500;color:var(--muted);overflow-wrap:anywhere}
 .dict-unit-option small{color:var(--muted);white-space:nowrap;font-size:10px}
-.dict-unit-cards .dict-unit-option small{display:block;margin-top:2px}
+.dict-unit-cards .dict-unit-option{min-height:40px;align-items:center;gap:5px;padding-inline:6px}
+.dict-unit-cards .dict-unit-option .training-check{margin-top:0}
+.dict-unit-cards .dict-unit-option .unit-copy strong{white-space:nowrap}
+.dict-unit-cards .dict-unit-option .unit-copy span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dict-unit-list .dict-unit-option{min-height:46px;align-items:center}
 .setup-actions{display:flex;gap:6px;align-items:center}
 .setup-actions .mini{min-width:48px}
@@ -241,11 +245,18 @@ const terms = {up:'上',down:'下'};
 const defaultBook = '5-up';
 const dictLayouts={
   compact:{name:'A · 紧凑按钮',bookHint:'点教材整行进入年级和册别选择。',unitHint:'三列等宽按钮，可连续点选多个单元。'},
-  cards:{name:'B · 两列卡片',bookHint:'直接用两个下拉框改年级或上下册。',unitHint:'每张卡显示单元主题和词数，点整张卡可选中。'},
+  cards:{name:'B · 紧凑单元',bookHint:'直接用两个下拉框改年级或上下册。'},
   list:{name:'C · 勾选列表',bookHint:'点教材整行，在原位展开年级和册别。',unitHint:'每行显示单元主题和词数，点整行可勾选。'}
 };
 const requestedLayout=new URLSearchParams(location.search).get('layout');
 let dictLayout=Object.hasOwn(dictLayouts,requestedLayout)?requestedLayout:null;
+const bUnitStyles={
+  count:{name:'B1 · 编号＋词数',hint:'两列三排。编号和词数放在同一行。'},
+  number:{name:'B2 · 仅编号',hint:'三列两排。每格只显示单元编号。'},
+  topic:{name:'B3 · 编号＋主题',hint:'两列三排。编号下方放一行主题。'}
+};
+const requestedUnitStyle=new URLSearchParams(location.search).get('unitStyle');
+let bUnitStyle=Object.hasOwn(bUnitStyles,requestedUnitStyle)?requestedUnitStyle:'count';
 const playerLayouts={
   reference:{name:'A · 底部播放器',hint:'参考录屏的布局。词卡居中，上一词、重听、播放、下一词和答案开关都在底部。'},
   inline:{name:'B · 紧凑词卡',hint:'词卡、答案和播放键集中在上半屏。上一词、播放、下一词一行排开。'},
@@ -253,8 +264,8 @@ const playerLayouts={
 };
 const requestedPlayer=new URLSearchParams(location.search).get('player');
 let playerLayout=Object.hasOwn(playerLayouts,requestedPlayer)?requestedPlayer:null;
-const makeUnits = entries => entries.map(([title,vocab],index)=>[
-  'Unit '+(index+1), title, vocab.split('|').map(pair=>pair.split('：'))
+const makeUnits = (entries,offset=0) => entries.map(([title,vocab],index)=>[
+  'Unit '+(index+offset+1), title, vocab.split('|').map(pair=>pair.split('：'))
 ]);
 const books = {
   '3-up':firstBookUnits,
@@ -289,6 +300,14 @@ const books = {
     ['Last weekend','stayed：停留|washed：洗|cleaned：打扫|watched：观看']
   ])
 };
+const comparisonUnits=[
+  ...books[defaultBook],
+  ...makeUnits([
+    ['What can you do?','sing：唱歌|dance：跳舞|draw：画|swim：游泳|cook：烹饪|speak：说'],
+    ['There is a big bed','clock：时钟|plant：植物|bottle：瓶子|bike：自行车|photo：照片'],
+    ['In a nature park','forest：森林|river：河流|lake：湖泊|mountain：山|hill：小山|tree：树']
+  ],3)
+];
 const wordMap=new Map(Object.values(books).flatMap(units=>units.flatMap(unit=>unit[2])).map(([en,cn])=>[en.toLowerCase(),cn]));
 const st={page:'home',tool:'dict',source:'unit',selectedUnits:new Set(),selected:new Set(),order:'正序',direction:'en',dictMode:'zh',gap:5,repeats:1,dictStarted:false,rate:.9,round:[],i:0,stats:[],active:false,answer:false,checked:false,readTry:0,pair:null,matched:new Set(),miss:0,gameWords:[],gameRight:[],notice:'',photoUrl:'',rows:[],wrongFilter:'pending'};
 st.expandedUnits=new Set();
@@ -298,7 +317,10 @@ const readStorage=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(ke
 const selectionKey='wordclass-training-textbook-v1';
 const savedSelection=readStorage(selectionKey,{});
 st.book=Object.hasOwn(books,savedSelection.book)?savedSelection.book:defaultBook;
-function currentUnits(){return books[st.book];}
+function currentUnits(){
+  if(dictLayout&&st.tool==='dict'&&st.book===defaultBook)return comparisonUnits;
+  return books[st.book];
+}
 function saveSelection(){
   if(dictLayout||playerLayout)return;
   try{localStorage.setItem(selectionKey,JSON.stringify({book:st.book}));}catch{}
@@ -502,14 +524,18 @@ function dictBookPicker(){
     +(inline?(st.inlineBook?inlineBookFields():'<div id="inline-book-fields" hidden></div>'):'');
 }
 function dictUnitPicker(){
-  const layoutClass={compact:'dict-unit-grid',cards:'dict-unit-cards',list:'dict-unit-list'}[dictLayout]||'actions';
+  const cards=dictLayout==='cards';
+  const list=dictLayout==='list';
+  const grid=cards&&bUnitStyle==='number'||dictLayout==='compact';
+  const detailed=list||cards&&!grid;
+  const topics=list||cards&&bUnitStyle==='topic';
+  const layoutClass=grid?'dict-unit-grid':list?'dict-unit-list':cards?'dict-unit-cards':'actions';
   const units=currentUnits().map(([unit,title,words],i)=>{
     const selected=st.selectedUnits.has(i);
-    const detailed=dictLayout==='cards'||dictLayout==='list';
-    const meta=`<small>${words.length} 词</small>`;
+    const meta=list||cards&&bUnitStyle==='count'?`<small>${words.length} 词</small>`:'';
+    const topic=topics?`<span${cards?` title="${safe(title)}"`:''}>${safe(title)}</span>`:'';
     const label=detailed?`<i class="training-check" aria-hidden="true">${selected?'✓':''}</i>
-      <span class="unit-copy"><strong>${safe(unit)}</strong><span>${safe(title)}</span>${dictLayout==='cards'?meta:''}</span>
-      ${dictLayout==='list'?meta:''}`:safe(unit);
+      <span class="unit-copy"><strong>${safe(unit)}</strong>${topic}</span>${meta}`:safe(unit);
     return action(`data-unit="${i}"`,label,'pill'+(detailed?' dict-unit-option':''),false,selected);
   }).join('');
   return `<div class="${layoutClass}" role="group" aria-label="教材单元">${units}</div>`;
@@ -798,9 +824,10 @@ function renderNote(title){
   const key=st.page==='exercise'?st.tool:st.page==='setup'&&st.tool!=='dict'?'trainingSetup':st.page;
   const [label,entry,defaultSteps,state]=pageNotes[key];
   const layout=key==='setup'?dictLayouts[dictLayout]:null;
+  const unitStyle=layout&&dictLayout==='cards'?bUnitStyles[bUnitStyle]:null;
   const player=key==='dict'?playerLayouts[playerLayout]:null;
-  const steps=player?[player.hint,'报词语言、间隔和次数可以直接调整。点开始后才会播报。','听写结束后可进入纸笔核对。']:layout?[layout.bookHint,layout.unitHint,'选好单元后勾词，再点「开始听写」。也可以从「错题本」选词。']:defaultSteps;
-  pageNote.innerHTML=`<h2 id="note-title">${player?.name||layout?.name||label||title+' · 选词'}</h2>
+  const steps=player?[player.hint,'报词语言、间隔和次数可以直接调整。点开始后才会播报。','听写结束后可进入纸笔核对。']:layout?[layout.bookHint,unitStyle?.hint||layout.unitHint,'选好单元后勾词，再点「开始听写」。也可以从「错题本」选词。']:defaultSteps;
+  pageNote.innerHTML=`<h2 id="note-title">${player?.name||unitStyle?.name||layout?.name||label||title+' · 选词'}</h2>
     <section><h3>怎么进入</h3><p>${entry}</p></section>
     <section><h3>怎么操作</h3><ol>${steps.map(step=>'<li>'+step+'</li>').join('')}</ol></section>
     <section class="note-state"><h3>当前状态</h3><p>${safe(state())}</p></section>`;
@@ -816,8 +843,12 @@ function renderComparisonNav(){
     </div>`;
     return;
   }
-  comparisonNav.innerHTML=Object.entries(dictLayouts).map(([key,layout])=>
+  const layouts=Object.entries(dictLayouts).map(([key,layout])=>
     action(`data-layout-option="${key}"`,layout.name,'pill',false,key===dictLayout)).join('');
+  const styles=dictLayout==='cards'?`<div class="compare-unit-styles" role="group" aria-label="方案 B 单元样式">
+    ${Object.entries(bUnitStyles).map(([key,style])=>action(`data-unit-style="${key}"`,style.name,'pill',false,key===bUnitStyle)).join('')}
+  </div>`:'';
+  comparisonNav.innerHTML=layouts+styles;
 }
 function showPlayerPreview(state){
   if(st.page!=='exercise'||st.tool!=='dict'){
@@ -1005,6 +1036,17 @@ document.addEventListener('click',async event=>{
     return;
   }
   if(d.playerState){showPlayerPreview(d.playerState);return;}
+  if(d.unitStyle){
+    if(d.unitStyle===bUnitStyle)return;
+    bUnitStyle=d.unitStyle;
+    const url=new URL(location.href);
+    url.searchParams.set('unitStyle',bUnitStyle);
+    history.replaceState(null,'',url);
+    renderComparisonNav();
+    if(st.page==='setup'&&st.tool==='dict')render();else setup('dict');
+    comparisonNav.querySelector(`[data-unit-style="${bUnitStyle}"]`)?.focus({preventScroll:true});
+    return;
+  }
   if(d.layoutOption){
     if(d.layoutOption===dictLayout)return;
     dictLayout=d.layoutOption;
@@ -1188,6 +1230,10 @@ if(dictLayout||playerLayout){
   if(playerLayout)comparisonNav.setAttribute('aria-label','对比听写播放页方案');
   comparisonNav.hidden=false;
   renderComparisonNav();
-  if(playerLayout)showPlayerPreview('ready');else setup('dict');
+  if(playerLayout)showPlayerPreview('ready');
+  else{
+    if(dictLayout==='cards')st.book=defaultBook;
+    setup('dict');
+  }
 }else render();
 </script></body></html>
