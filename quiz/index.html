@@ -105,6 +105,10 @@ svg{width:18px;height:18px;display:block}.tile>div{min-width:0}.tile strong{font
 .dict-review-footer{margin-top:auto}
 .dict-review-footer .split{margin-bottom:8px}
 .dict-review-footer .player-link{grid-column:1/-1}
+.dict-result-summary{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;column-gap:8px}
+.dict-result-book-link{display:inline-flex;align-items:center;gap:2px;min-height:44px;padding:0;border:0;border-radius:5px;background:transparent;color:#8b391c;font-size:inherit;font-weight:750;white-space:nowrap}
+.dict-result-book-link svg{width:14px;height:14px}
+.dict-result-icon .dict-result-summary{justify-content:flex-start}
 .dict-result-icon .prompt{padding:16px;text-align:left;background:#fff}
 .dict-result-labeled .prompt{padding:16px;background:#edf8f2;border-color:#cee6d8}
 .dict-result-labeled .hint strong{color:var(--mint)}
@@ -363,6 +367,7 @@ st.dictUnitSelection=new Set();
 st.dictMarked=new Map();
 st.dictReviewIndex=0;
 st.photoBack='home';
+st.wrongBack='home';
 let playId=0,gameTimer=0,readCapture=null,readAudioUrl='',readPlayer=null;
 const readStorage=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))||fallback}catch{return fallback}};
 const selectionKey='wordclass-training-textbook-v1';
@@ -421,6 +426,11 @@ function go(page){
     clearInterval(gameTimer);
     gameTimer=0;
     st.gameElapsed=gameTime();
+  }
+  if(page==='wrong'){
+    const fromDictResult=st.page==='result'&&st.tool==='dict';
+    st.wrongBack=fromDictResult?'result':'home';
+    if(fromDictResult)st.wrongFilter='pending';
   }
   st.page=page;st.notice='';render();view.scrollTop=0;window.scrollTo(0,0);
 }
@@ -816,9 +826,13 @@ function checkView(){
 }
 function dictResultView(){
   const style=playerLayout&&playerLayout!=='reference'?'icon':dockLayout;
+  const count=st.dictMarked.size;
   return `<div class="dict-review dict-result-${style}">
     <div class="prompt"><div class="big">听写完成</div>
-      <p class="hint">本轮 ${st.round.length} 词 · 已加入错题本 <strong>${st.dictMarked.size}</strong> 词</p>
+      <div class="hint dict-result-summary">
+        <span>本轮 ${st.round.length} 词 · 已加入错题本 <strong>${count}</strong> 词</span>
+        ${count?action('data-nav="wrong" aria-label="查看错题本"','查看'+icon('right'),'dict-result-book-link'):''}
+      </div>
     </div>
     <div class="result-actions dict-review-footer">
       ${action('data-nav="home"','返回小测','primary')}
@@ -934,7 +948,7 @@ function renderNote(title){
   let steps=defaultSteps;
   if(player)steps=[dock?.player||player.hint,'点开始才播报。答案开关对本轮后续单词也生效。','报完后优先显示「去核对」，也能从头再报。'];
   if(dock&&key==='check')steps=[dock.review,'上方显示本轮加入的词数，点亮或取消时实时更新。','点「完成核对」查看本轮结果。'];
-  if(key==='result'&&st.tool==='dict')steps=['查看本轮词数和加入错题本的词数。','点「返回小测」结束本轮，或点「重听一遍」用同一组词重新准备。'];
+  if(key==='result'&&st.tool==='dict')steps=['有词加入错题本时，可点词数旁的「查看」。','点「返回小测」结束本轮，或点「重听一遍」用同一组词重新准备。'];
   if(layout)steps=[layout.bookHint,unitStyle?.hint||layout.unitHint,'单元词会自动勾选，可取消个别词，再点「开始听写」。也可以从「错题本」或「收藏本」选词。'];
   pageNote.innerHTML=`<h2 id="note-title">${dock?.name||player?.name||unitStyle?.name||layout?.name||label||title+' · 选词'}</h2>
     <section><h3>怎么进入</h3><p>${entry}</p></section>
@@ -1193,7 +1207,7 @@ document.addEventListener('click',async event=>{
     comparisonNav.querySelector(`[data-layout-option="${dictLayout}"]`)?.focus({preventScroll:true});
     return;
   }
-  if(d.back!==undefined){go(({grade:'setup',term:'grade',setup:'home',exercise:'setup',check:'setup',result:'home',photo:st.photoBack,wrong:'home'})[st.page]||'home');return;}
+  if(d.back!==undefined){go(({grade:'setup',term:'grade',setup:'home',exercise:'setup',check:'setup',result:'home',photo:st.photoBack,wrong:st.wrongBack})[st.page]||'home');return;}
   if(d.openBook!==undefined){openBook();return;}
   if(d.inlineBookToggle!==undefined){
     st.inlineBook=!st.inlineBook;
