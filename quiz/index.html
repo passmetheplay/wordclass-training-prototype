@@ -43,6 +43,32 @@ svg{width:18px;height:18px;display:block}.tile>div{min-width:0}.tile strong{font
 .scope-title small{color:var(--muted);font-size:11px}
 .compare-switch{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
 .compare-switch button{min-height:34px}
+.compare-states{display:flex;gap:6px;margin-left:auto}
+.dict-player{min-height:100%;display:flex;flex-direction:column}
+.dict-player .player-status{font-size:12px;color:var(--muted);font-weight:750}
+.dict-player .player-status strong{color:var(--ink)}
+.dict-player .progress{margin:7px 0 12px}
+.dict-player .dict-options{margin-bottom:12px}
+.dict-player .player-word{display:grid;justify-items:center;align-content:center;gap:5px;min-height:104px;padding:16px 10px;text-align:center}
+.dict-player .player-word strong{max-width:100%;font-size:25px;line-height:1.2;overflow-wrap:anywhere}
+.dict-player .player-word p{font-size:12px;color:var(--muted)}
+.dict-player .player-word svg{width:26px;height:26px;color:var(--mint)}
+.dict-player-reference .player-word{flex:1}
+.dict-player-inline .player-word{border:1px solid var(--line);border-radius:15px;background:#fffaf4}
+.dict-player-focus .player-word{flex:1;align-content:start;padding-top:24px}
+.dict-player-focus .player-word strong{font-size:30px}
+.dict-player .player-footer{margin-top:auto;padding-top:12px}
+.dict-player .player-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.dict-player .player-row button{min-height:42px;padding-inline:4px;font-size:12px}
+.dict-player .player-icon-row{display:flex;align-items:center;justify-content:space-between;gap:5px;max-width:340px;margin:auto}
+.dict-player .player-icon{display:grid;place-items:center;flex:none;width:38px;height:38px;padding:0;border:1px solid var(--line);border-radius:50%;background:#fff}
+.dict-player .player-icon.main{width:48px;height:48px;border:0;background:var(--orange);color:#fff}
+.dict-player .player-icon[aria-pressed=true]{border-color:#dbac91;background:#fff0e4;color:#8b391c}
+.dict-player .player-links{display:flex;justify-content:center;gap:12px;margin:4px 0 10px}
+.dict-player .player-link{min-height:34px;padding:4px 5px;border:0;background:none;color:#8b391c;font-size:12px;font-weight:750}
+.dict-player-focus .player-links{justify-content:flex-end;margin:0}
+.dict-player-focus .player-row{margin-bottom:7px}
+.dict-player .player-start{align-self:stretch}
 .dict-book-trigger{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#fffaf4;text-align:left}
 .dict-book-trigger svg{flex:none;color:#795d4c}
 .dict-book-trigger[aria-expanded=true] svg{transform:rotate(180deg)}
@@ -190,6 +216,11 @@ const icons={
   photo:'<path d="M4 7h4l2-3h4l2 3h4a1 1 0 0 1 1 1v11H3V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3"/>',
   down:'<path d="m6 9 6 6 6-6"/>',
   right:'<path d="m9 6 6 6-6 6"/>',
+  previous:'<path d="m15 6-6 6 6 6"/>',
+  repeat:'<path d="M4 10a8 8 0 1 1 0 5M4 5v5h5"/>',
+  pause:'<path d="M9 5v14m6-14v14"/>',
+  eye:'<path d="M2.5 12s3.5-5.5 9.5-5.5 9.5 5.5 9.5 5.5-3.5 5.5-9.5 5.5S2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="2.2"/>',
+  check:'<path d="m5 12 4 4L19 6"/>',
   replay:'<path d="m9 5 11 7-11 7z"/>',
   stop:'<rect x="6" y="6" width="12" height="12" rx="2"/>'
 };
@@ -215,6 +246,13 @@ const dictLayouts={
 };
 const requestedLayout=new URLSearchParams(location.search).get('layout');
 let dictLayout=Object.hasOwn(dictLayouts,requestedLayout)?requestedLayout:null;
+const playerLayouts={
+  reference:{name:'A · 底部播放器',hint:'参考录屏的布局。词卡居中，上一词、重听、播放、下一词和答案开关都在底部。'},
+  inline:{name:'B · 紧凑词卡',hint:'词卡、答案和播放键集中在上半屏。上一词、播放、下一词一行排开。'},
+  focus:{name:'C · 纸笔模式',hint:'上方留给进度与答案，底部用一颗宽按钮开始、暂停或继续。上一词、重听和下一词放在它上方。'}
+};
+const requestedPlayer=new URLSearchParams(location.search).get('player');
+let playerLayout=Object.hasOwn(playerLayouts,requestedPlayer)?requestedPlayer:null;
 const makeUnits = entries => entries.map(([title,vocab],index)=>[
   'Unit '+(index+1), title, vocab.split('|').map(pair=>pair.split('：'))
 ]);
@@ -262,7 +300,7 @@ const savedSelection=readStorage(selectionKey,{});
 st.book=Object.hasOwn(books,savedSelection.book)?savedSelection.book:defaultBook;
 function currentUnits(){return books[st.book];}
 function saveSelection(){
-  if(dictLayout)return;
+  if(dictLayout||playerLayout)return;
   try{localStorage.setItem(selectionKey,JSON.stringify({book:st.book}));}catch{}
 }
 function bookName(book){
@@ -538,6 +576,7 @@ function dictSettings(){
   </section>`;
 }
 function dictExercise(){
+  if(playerLayout)return simplifiedPlayer();
   const settings=dictSettings();
   if(!st.dictStarted)return `${settings}<div class="prompt">
     <div class="big">准备就绪</div><p class="hint">本轮 ${st.round.length} 词 · 准备好纸笔</p>
@@ -550,6 +589,52 @@ function dictExercise(){
   <div class="play-controls">
     ${action('data-play="dict"',st.active?'暂停报词':'继续报词','pill mint')}${action('data-play="one"','重听本词')}${action('data-reveal',st.answer?'遮住答案':'显示答案')}</div>
   <div class="split">${action('data-move="-1"','上一词','pill',st.i===0)}${action('data-move="1"',st.i===st.round.length-1?'完成，核对答案':'下一词','primary')}</div>${timerNote()}`;
+}
+function simplifiedPlayer(){
+  const started=st.dictStarted;
+  const playLabel=!started?'开始报词':st.active?'暂停报词':'继续报词';
+  const revealLabel=st.answer?'遮住答案':'显示答案';
+  const end=st.i===st.round.length-1;
+  const nextLabel=end?'去核对':'下一词';
+  const [en,cn]=current();
+  const word=started
+    ?st.answer?`<strong lang="en">${safe(en)}</strong><p>${safe(cn)}</p>`
+      :icon('dict')+'<strong>答案已遮住</strong>'
+    :`<strong>准备就绪</strong><p>本轮 ${st.round.length} 词 · 准备好纸笔</p>`;
+  const status=started?`<div class="between player-status">
+    <strong>第 ${st.i+1} / ${st.round.length} 词</strong><span>${st.active?'正在报词':'已暂停'}</span>
+  </div>${progress(st.i+1,st.round.length,false)}`:'';
+  const play=action('data-play="dict"',playLabel,'primary player-start');
+  const reveal=action('data-reveal',revealLabel,'player-link',false,st.answer);
+  const repeat=action('data-play="one"','重听','player-link');
+  const previous=action('data-move="-1"','上一词','pill',st.i===0);
+  const next=action('data-move="1"',nextLabel,'pill');
+  let controls=play;
+  let extra='';
+  if(started){
+    if(playerLayout==='reference'){
+      const iconButton=(attrs,name,label,disabled=false,pressed=null,primary=false)=>
+        action(`${attrs} aria-label="${label}" title="${label}"`,icon(name),'player-icon'+(primary?' main':''),disabled,pressed);
+      controls=`<div class="player-icon-row" role="group" aria-label="播放控制">
+        ${iconButton('data-move="-1"','previous','上一词',st.i===0)}
+        ${iconButton('data-play="one"','repeat','重听本词')}
+        ${iconButton('data-play="dict"',st.active?'pause':'replay',playLabel,false,null,true)}
+        ${iconButton('data-move="1"',end?'check':'right',nextLabel)}
+        ${iconButton('data-reveal','eye',revealLabel,false,st.answer)}
+      </div>`;
+    }else if(playerLayout==='inline'){
+      extra=`<div class="player-links">${repeat}${reveal}</div>`;
+      controls=`<div class="player-row">${previous}${play}${next}</div>`;
+    }else{
+      extra=`<div class="player-links">${reveal}</div>`;
+      controls=`<div class="player-row">${previous}${action('data-play="one"','重听','pill')}${next}</div>${play}`;
+    }
+  }
+  const footer=playerLayout==='inline'?'':'player-footer';
+  return `<div class="dict-player dict-player-${playerLayout}">
+    ${status}${dictSettings()}<div class="player-word">${word}</div>${extra}
+    <div class="${footer}">${controls}</div>${timerNote()}
+  </div>`;
 }
 const phonetics={name:'neɪm',nice:'naɪs',ear:'ɪr',hand:'hænd',listen:'ˈlɪsən',help:'hɛlp',kind:'kaɪnd',strict:'strɪkt',young:'jʌŋ',funny:'ˈfʌni',polite:'pəˈlaɪt',helpful:'ˈhɛlpfəl'};
 const translateModes={en:'英文选义',zh:'中文选词',audio:'听音选义'};
@@ -713,16 +798,43 @@ function renderNote(title){
   const key=st.page==='exercise'?st.tool:st.page==='setup'&&st.tool!=='dict'?'trainingSetup':st.page;
   const [label,entry,defaultSteps,state]=pageNotes[key];
   const layout=key==='setup'?dictLayouts[dictLayout]:null;
-  const steps=layout?[layout.bookHint,layout.unitHint,'选好单元后勾词，再点「开始听写」。也可以从「错题本」选词。']:defaultSteps;
-  pageNote.innerHTML=`<h2 id="note-title">${layout?.name||label||title+' · 选词'}</h2>
+  const player=key==='dict'?playerLayouts[playerLayout]:null;
+  const steps=player?[player.hint,'报词语言、间隔和次数可以直接调整。点开始后才会播报。','听写结束后可进入纸笔核对。']:layout?[layout.bookHint,layout.unitHint,'选好单元后勾词，再点「开始听写」。也可以从「错题本」选词。']:defaultSteps;
+  pageNote.innerHTML=`<h2 id="note-title">${player?.name||layout?.name||label||title+' · 选词'}</h2>
     <section><h3>怎么进入</h3><p>${entry}</p></section>
     <section><h3>怎么操作</h3><ol>${steps.map(step=>'<li>'+step+'</li>').join('')}</ol></section>
     <section class="note-state"><h3>当前状态</h3><p>${safe(state())}</p></section>`;
 }
 const comparisonNav=document.querySelector('#dict-comparison');
 function renderComparisonNav(){
+  if(playerLayout){
+    const layouts=Object.entries(playerLayouts).map(([key,layout])=>
+      action(`data-player-option="${key}"`,layout.name,'pill',false,key===playerLayout)).join('');
+    comparisonNav.innerHTML=layouts+`<div class="compare-states" role="group" aria-label="预览页面状态">
+      ${action('data-player-state="ready"','看准备页','mini')}
+      ${action('data-player-state="answer"','看答案状态','mini')}
+    </div>`;
+    return;
+  }
   comparisonNav.innerHTML=Object.entries(dictLayouts).map(([key,layout])=>
     action(`data-layout-option="${key}"`,layout.name,'pill',false,key===dictLayout)).join('');
+}
+function showPlayerPreview(state){
+  if(st.page!=='exercise'||st.tool!=='dict'){
+    st.book=defaultBook;
+    setup('dict');
+    st.selectedUnits.add(2);
+    choosePool();
+    initializeRound();
+  }
+  stop();
+  st.i=state==='answer'?Math.min(1,st.round.length-1):0;
+  newQuestion();
+  st.dictStarted=state==='answer';
+  st.answer=state==='answer';
+  st.notice='';
+  render();
+  view.scrollTop=0;
 }
 function render(){
   const switching=st.page==='grade'||st.page==='term';
@@ -881,6 +993,18 @@ async function autoSpeak(){
 document.addEventListener('click',async event=>{
   const b=event.target.closest('button');if(!b||b.disabled)return;
   const d=b.dataset;
+  if(d.playerOption){
+    if(d.playerOption===playerLayout)return;
+    playerLayout=d.playerOption;
+    const url=new URL(location.href);
+    url.searchParams.set('player',playerLayout);
+    history.replaceState(null,'',url);
+    renderComparisonNav();
+    if(st.page==='exercise'&&st.tool==='dict')render();else showPlayerPreview('ready');
+    comparisonNav.querySelector(`[data-player-option="${playerLayout}"]`)?.focus({preventScroll:true});
+    return;
+  }
+  if(d.playerState){showPlayerPreview(d.playerState);return;}
   if(d.layoutOption){
     if(d.layoutOption===dictLayout)return;
     dictLayout=d.layoutOption;
@@ -1057,12 +1181,13 @@ view.addEventListener('submit',event=>{
   if(rows.length)setRows(rows);else notify('请输入英文单词，每行一个。');
 });
 window.addEventListener('pagehide',clearReadAudio);
-if(dictLayout){
+if(dictLayout||playerLayout){
   const previewHeader=document.querySelector('.preview-head');
-  previewHeader.querySelector('h1').textContent='报听写选词方案';
-  previewHeader.querySelector('p').textContent='切换方案，试试怎么选教材、单元和单词。';
+  previewHeader.querySelector('h1').textContent=playerLayout?'报听写播放页方案':'报听写选词方案';
+  previewHeader.querySelector('p').textContent=playerLayout?'用同一组 5 个词比较播放页，点开始才播报。':'切换方案，试试怎么选教材、单元和单词。';
+  if(playerLayout)comparisonNav.setAttribute('aria-label','对比听写播放页方案');
   comparisonNav.hidden=false;
   renderComparisonNav();
-  setup('dict');
+  if(playerLayout)showPlayerPreview('ready');else setup('dict');
 }else render();
 </script></body></html>
