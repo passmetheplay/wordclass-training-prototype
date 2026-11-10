@@ -830,7 +830,7 @@ function dictResultView(){
   return `<div class="dict-review dict-result-${style}">
     <div class="prompt"><div class="big">听写完成</div>
       <div class="hint dict-result-summary">
-        <span>本轮 ${st.round.length} 词 · 已加入错题本 <strong>${count}</strong> 词</span>
+        <span>本轮 ${st.round.length} 词${count?` · 已加入错题本 <strong>${count}</strong> 词`:''}</span>
         ${count?action('data-nav="wrong" aria-label="查看错题本"','查看'+icon('right'),'dict-result-book-link'):''}
       </div>
     </div>
@@ -948,7 +948,7 @@ function renderNote(title){
   let steps=defaultSteps;
   if(player)steps=[dock?.player||player.hint,'点开始才播报。答案开关对本轮后续单词也生效。','报完后优先显示「去核对」，也能从头再报。'];
   if(dock&&key==='check')steps=[dock.review,'上方显示本轮加入的词数，点亮或取消时实时更新。','点「完成核对」查看本轮结果。'];
-  if(key==='result'&&st.tool==='dict')steps=['有词加入错题本时，可点词数旁的「查看」。','点「返回小测」结束本轮，或点「重听一遍」用同一组词重新准备。'];
+  if(key==='result'&&st.tool==='dict')steps=[st.dictMarked.size?'点收录词数旁的「查看」，可打开错题本。':'查看本轮词数。','点「返回小测」结束本轮，或点「重听一遍」用同一组词重新准备。'];
   if(layout)steps=[layout.bookHint,unitStyle?.hint||layout.unitHint,'单元词会自动勾选，可取消个别词，再点「开始听写」。也可以从「错题本」或「收藏本」选词。'];
   pageNote.innerHTML=`<h2 id="note-title">${dock?.name||player?.name||unitStyle?.name||layout?.name||label||title+' · 选词'}</h2>
     <section><h3>怎么进入</h3><p>${entry}</p></section>
